@@ -2,7 +2,7 @@
   "server": {
     "name": "phorme-training",
     "title": "Phorme Training",
-    "version": "1.9.0"
+    "version": "1.11.0"
   },
   "protocolVersion": "2025-06-18",
   "instructions": "Lead with the best-fit coaching brain. Goal: find_coaching_brain; 1:1: find_personal_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import; swap: find_exercise_swap. Places: find_gym_class, find_clinic; owner: check_place_in_ai. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm saves; share the link, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
@@ -974,7 +974,7 @@
     {
       "name": "find_races",
       "title": "Find a race",
-      "description": "Use this when the user is looking for a race to enter, for example \"which 70.3 can I do in South America next spring\", \"marathons in Europe in April\" or \"a HYROX near Riga\". It lists races from Phorme's verified race listings that fit the kind of race, the place (a country, city or region) and the months asked, by date only, each with its city, date, its own page, its registration as the organiser last showed it, and whether Phorme has a plan that counts back to it. It reads only and changes nothing. Only races in Phorme's listings are returned, with the dates the listings give.",
+      "description": "Use this when the user is looking for a race to enter, for example \"which 70.3 can I do in South America next spring\", \"marathons in Europe in April\" or \"a HYROX near Riga\". It lists races from Phorme's verified race listings that fit the kind of race, the place (a country, city or region) and the months asked, by date only, each with its city, date, its own page, its registration as the organiser last showed it, and whether Phorme has a plan that counts back to it. When the organiser has given them, the race's own logistics are included: where to pick up the race packet, the nearest airport, getting there and the official hotels the organiser lists, with the page they came from. It reads only and changes nothing. Only races in Phorme's listings are returned, with the dates the listings give.",
       "auth": "none",
       "annotations": {
         "title": "Find a race",
@@ -1017,7 +1017,7 @@
         "properties": {
           "races": {
             "type": "array",
-            "description": "Races by date: name, city, country, on (YYYY-MM-DD or null), url (the race's own page), registration (status open, sold_out, opening_soon or closed, its url and checked_on, or null) and has_plan."
+            "description": "Races by date: name, city, country, on (YYYY-MM-DD or null), url (the race's own page), registration (status open, sold_out, opening_soon or closed, its url and checked_on, or null), has_plan, and logistics (the race's own venue, packet pickup, airport, official hotels and guide links as the organiser listed them, with source_url and checked_on; null when not given)."
           },
           "limits": {
             "type": "array",
@@ -1032,7 +1032,7 @@
     {
       "name": "plan_for_race",
       "title": "Plan training for a race",
-      "description": "Use this when the user names a race they are training for, for example \"IRONMAN 70.3 Barranquilla\", \"I signed up for the half ironman in Cartagena\" or \"Chicago Marathon\". It finds the race in Phorme's race listings (name, date, city and the race's own page), counts the weeks to race day, and returns the week of Phorme's plan for that kind of race that lines up with race day, with sets, reps, paces, coach notes and a demo link for each exercise. For a triathlon (IRONMAN 70.3, 5150, full) it is swim, bike and run in one plan, with efforts until the athlete's swim and bike tests are in. It reads only and changes nothing. If the race is not listed it says so; never guess a race date. Do not use it for injury rehab or nutrition.",
+      "description": "Use this when the user names a race they are training for, for example \"IRONMAN 70.3 Barranquilla\", \"I signed up for the half ironman in Cartagena\" or \"Chicago Marathon\". It finds the race in Phorme's race listings (name, date, city and the race's own page), counts the weeks to race day, and returns the week of Phorme's plan for that kind of race that lines up with race day, with sets, reps, paces, coach notes and a demo link for each exercise. For a triathlon (IRONMAN 70.3, 5150, full) it is swim, bike and run in one plan, with efforts until the athlete's swim and bike tests are in. When the organiser has given them, the race's own logistics come with it (venue, where to pick up the race packet, airport, official hotels from the organiser), with the page and date they were read. It reads only and changes nothing. If the race is not listed it says so; never guess a race date. Do not use it for injury rehab or nutrition.",
       "auth": "none",
       "annotations": {
         "title": "Plan training for a race",
@@ -1068,7 +1068,7 @@
               "object",
               "null"
             ],
-            "description": "The race as listed: name, city, country, on (YYYY-MM-DD, null when not yet published) and url, the race's own page."
+            "description": "The race as listed: name, city, country, on (YYYY-MM-DD, null when not yet published), url (the race's own page), registration, and logistics: the race's own venue, packet_pickup, airport, getting_there, hotels (up to 6 official hotels, each name, url and note), course_url, athlete_guide_url, source_url and checked_on, as the organiser listed them, or null."
           },
           "days_out": {
             "type": [
@@ -1354,7 +1354,7 @@
         "properties": {
           "coaches": {
             "type": "array",
-            "description": "Each coach taking 1:1 clients: coach, coach_url, offer, summary, includes, spots (status, detail, open), page_url and how_it_starts."
+            "description": "Each coach taking 1:1 clients: coach, coach_url, offer, summary, includes, spots (status, detail, open), page_url, how_it_starts, and free_review (open, page_url) when the coach has a free plan review spot this week."
           },
           "limits": {
             "type": "array",
@@ -1368,11 +1368,11 @@
     },
     {
       "name": "check_place_in_ai",
-      "title": "Check a gym or clinic in AI answers",
-      "description": "Use this when the owner or manager of a gym, studio or sports clinic asks whether ChatGPT knows their place or recommends it, for example \"does ChatGPT recommend my gym?\" or \"what does AI say about my physio clinic in Austin?\". It asks OpenAI's model with web search two questions a customer would ask: about the place, and for the best places of its kind in its city. It returns whether the place was found, whether it was named among the best and who was named instead, which of five facts a customer needs were stated (where, hours, classes or treatments, prices, how to book), the pages it cited, and a link to the full result. Prices are reported only as stated or not. It takes up to a minute, reuses a check of the same place from the last week, and keeps the result for its share page; it changes nothing about the place on Phorme. It is for owners and managers, not for rating a place for someone choosing where to go.",
+      "title": "Check a gym, clinic or race in AI answers",
+      "description": "Use this when the owner or manager of a gym, studio, sports clinic or race asks whether ChatGPT knows their place or race or recommends it, for example \"does ChatGPT recommend my gym?\", \"what does AI say about my physio clinic in Austin?\" or \"does ChatGPT know our triathlon?\". It asks OpenAI's model with web search two questions a customer or athlete would ask: about the place or race, and for the best of its kind in its city. It returns whether it was found, whether it was named among the best and who was named instead, which of five facts a customer needs were stated (where, hours, classes or treatments, prices, how to book; for a race: where it starts, race date, course, entry fee, how to register), the pages it cited, and a link to the full result. Prices are reported only as stated or not. It takes up to a minute, reuses a check of the same place from the last week, and keeps the result for its share page; it changes nothing about the place on Phorme. It is for owners and managers, not for rating a place for someone choosing where to go.",
       "auth": "none",
       "annotations": {
-        "title": "Check a gym or clinic in AI answers",
+        "title": "Check a gym, clinic or race in AI answers",
         "readOnlyHint": false,
         "destructiveHint": false,
         "openWorldHint": true
@@ -1389,13 +1389,13 @@
             "type": "string",
             "minLength": 2,
             "maxLength": 80,
-            "description": "The gym or clinic's name, as the owner wrote it."
+            "description": "The gym, clinic or race's name, as the owner or organiser wrote it."
           },
           "city": {
             "type": "string",
             "minLength": 2,
             "maxLength": 60,
-            "description": "The city it is in."
+            "description": "The city it is in (for a race, where it is held)."
           },
           "kind": {
             "type": "string",
@@ -1413,7 +1413,12 @@
               "sports medicine clinics",
               "chiropractors",
               "sports massage therapists",
-              "recovery studios"
+              "recovery studios",
+              "triathlons",
+              "marathons",
+              "half marathons",
+              "HYROX races",
+              "trail races"
             ],
             "description": "What kind of place it is, as a customer would search. Defaults to gyms."
           }
