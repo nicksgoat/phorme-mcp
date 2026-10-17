@@ -2,13 +2,9 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "me.phor/phorme-training",
   "title": "Phorme Training",
-  "description": "Coach-built training methods, gym weeks, workouts with demos and your log. Coaches run theirs here.",
-  "version": "1.6.0",
-  "websiteUrl": "https://phor.me/chatgpt",
-  "remotes": [
-    {
-      "type": "streamable-http",
-      "url": "https://phor.me/api/mcp"
-    }
-  ]
+  "description": "Coach-built training: coaching brains, programs, race plans, gyms, clinics, demos and your log.",
+  "version": "1.6.1",
+  "websiteUrl": "https://phor.me/agents",
+  "repository": { "url": "https://github.com/nicksgoat/phorme-mcp", "source": "github" },
+  "remotes": [ { "type": "streamable-http", "url": "https://phor.me/api/mcp" } ]
 }

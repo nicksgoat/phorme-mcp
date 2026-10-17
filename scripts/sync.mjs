@@ -42,9 +42,5 @@ const next = readme
   .replace(/<!-- version:start -->[\s\S]*<!-- version:end -->/, `<!-- version:start -->${init.serverInfo.version}<!-- version:end -->`)
 writeFileSync('README.md', next)
 
-const server = JSON.parse(readFileSync('server.json', 'utf8'))
-if (server.version !== init.serverInfo.version) {
-  server.version = init.serverInfo.version
-  writeFileSync('server.json', JSON.stringify(server, null, 2) + '\n')
-}
+// server.json is the official registry entry; its version moves only on a registry publish.
 console.log(`phorme-training ${init.serverInfo.version}: ${slim.length} tools`)
