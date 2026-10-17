@@ -2,7 +2,7 @@
   "server": {
     "name": "phorme-training",
     "title": "Phorme Training",
-    "version": "1.6.0"
+    "version": "1.7.0"
   },
   "protocolVersion": "2025-06-18",
   "instructions": "Phorme coaches through curated brains. Lead with the fit. Goal: find_coaching_brain. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import. Swap: find_exercise_swap. Places: find_gym_class, find_clinic. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; ask before saving; share the link, then render_training_import. Use only tool output; invent no ids, dates or loads. No prices or purchases.",
@@ -1598,7 +1598,7 @@
     {
       "name": "get_my_coaching_business",
       "title": "Get my coaching brains",
-      "description": "Use this when a Phorme coach asks about their own coaching brains: how many members train under each, who went quiet, what they have earned, and whether a note to members can go today. It reads only and changes nothing. It needs a connected Phorme account; an account without a coaching brain gets the address of the coach console.",
+      "description": "Use this when a Phorme coach asks about their own coaching brains: how many members train under each, who went quiet, what they have earned, and whether a note to members can go today. It reads only and changes nothing. It needs a connected Phorme account; an account without a coaching brain can start one with start_my_coaching_brain.",
       "auth": "OAuth",
       "annotations": {
         "title": "Get my coaching brains",
@@ -1627,6 +1627,70 @@
             "description": "Each brain with status, member totals, quiet members (labels only), earnings in cents and whether a note may go today."
           },
           "console_url": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "start_my_coaching_brain",
+      "title": "Start my coaching brain",
+      "description": "Use this when a coach or trainer wants to turn their own method into a Phorme coaching brain and get_my_coaching_business shows they have none yet, or they ask for a new one. It creates a draft brain with the name they chose and their method in their own words; members see nothing until the coach publishes it in the coach console. Then offer save_program_to_my_coaching_brain for their first program. It needs a connected Phorme account; signing in with a phone number creates one.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Start my coaching brain",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "confirmation"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 40,
+            "description": "The brain's name, as the coach chose it, for example \"Hayes Strength\"."
+          },
+          "tagline": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "One line on who it is for, in the coach's words."
+          },
+          "method": {
+            "type": "string",
+            "maxLength": 4000,
+            "description": "How the coach trains people, in their own words from this conversation. Never invented."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "True only after the coach confirmed the name and method."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "brain",
+          "console_url"
+        ],
+        "properties": {
+          "brain": {
+            "type": "object"
+          },
+          "method_saved": {
+            "type": "boolean"
+          },
+          "console_url": {
+            "type": "string"
+          },
+          "next": {
             "type": "string"
           }
         }
