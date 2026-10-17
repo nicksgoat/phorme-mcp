@@ -1,0 +1,29 @@
+name: Sync with the live server
+
+on:
+  schedule:
+    - cron: '17 9 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read tools from https://phor.me/api/mcp
+        run: node scripts/sync.mjs
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then echo "No change"; exit 0; fi
+          git config user.name "phorme-bot"
+          git config user.email "support@phor.me"
+          git commit -am "Sync tools from the live server"
+          git push
