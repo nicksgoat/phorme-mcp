@@ -3,7 +3,7 @@
 Coach-built training for any AI assistant. Phorme Training is a remote [Model Context Protocol](https://modelcontextprotocol.io) server. An assistant can use it to find a coaching brain, program, race plan, gym class or sports clinic, preview workouts with exercise demos, and save training to the [Phorme](https://phor.me) app.
 
 - **Endpoint:** `https://phor.me/api/mcp` (streamable HTTP)
-- **Version:** <!-- version:start -->1.8.0<!-- version:end -->
+- **Version:** <!-- version:start -->1.9.0<!-- version:end -->
 - **Auth:** none for finders and previews. Saving training and reading a member's log use OAuth 2.1 ([protected resource metadata](https://phor.me/.well-known/oauth-protected-resource)).
 - **Server card:** [`https://phor.me/.well-known/mcp.json`](https://phor.me/.well-known/mcp.json)
 - **Registry name:** `me.phor/phorme-training` in the [official MCP registry](https://registry.modelcontextprotocol.io/v0/servers?search=me.phor)
@@ -51,6 +51,7 @@ claude mcp add --transport http phorme https://phor.me/api/mcp
 | `find_coaching_brain` | Use this when the user wants a way to train for a goal or sport, for example "I want to get more explosive for basketball", "build muscle three days a week" or "train for a half marathon", and has not picked a programme. | read | none |
 | `find_gym_class` | Use this when the user wants a gym, studio or class to train at in person, for example "a strength class in Austin this week" or "a gym near me". | read | none |
 | `find_clinic` | Use this when the user wants to be seen in person by a physical therapist, sports medicine clinic, chiropractor, sports massage therapist or recovery studio, in a city they name or near a position they share. | read | none |
+| `find_personal_coach` | Use this when the user wants a human coach of their own: 1:1 coaching, someone who writes their program for them, checks in each week, reviews how they move or answers their messages, for example "I want a real coach for basketball" or "can someone coach me one on one?". | read | none |
 | `check_place_in_ai` | Use this when the owner or manager of a gym, studio or sports clinic asks whether ChatGPT knows their place or recommends it, for example "does ChatGPT recommend my gym?" or "what does AI say about my physio clinic in Austin?". | write | none |
 | `find_exercise_swap` | Use this when the user needs a replacement for one exercise because they do not have the equipment, the station is taken, or they want a different option, for example no cable machine for cable rows. | read | none |
 | `get_training_history` | Use this when the user asks about their own training logged in Phorme: what they did last time, how often they trained, their personal records, or a next workout built on their recent sessions. | read | OAuth |

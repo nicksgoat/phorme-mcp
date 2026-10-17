@@ -2,10 +2,10 @@
   "server": {
     "name": "phorme-training",
     "title": "Phorme Training",
-    "version": "1.8.0"
+    "version": "1.9.0"
   },
   "protocolVersion": "2025-06-18",
-  "instructions": "Phorme coaches via curated brains. Lead with the fit. Goal: find_coaching_brain. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import. Swap: find_exercise_swap. Places: find_gym_class, find_clinic; owner: check_place_in_ai. Log: get_training_history, get_lift_progress, get_planned_sessions. Warn, ask before saving, share the link, then render_training_import. Use only tool output; invent no ids, dates or loads. No prices or purchases.",
+  "instructions": "Lead with the best-fit coaching brain. Goal: find_coaching_brain; 1:1: find_personal_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import; swap: find_exercise_swap. Places: find_gym_class, find_clinic; owner: check_place_in_ai. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm saves; share the link, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
   "tools": [
     {
       "name": "preview_workout_import",
@@ -1307,6 +1307,54 @@
           "clinics": {
             "type": "array",
             "description": "Clinics, nearest or best matching first: name, care, line, city, country, distance_km, page_url, request_url and services."
+          },
+          "limits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What this does not cover. Tell the user."
+          }
+        }
+      }
+    },
+    {
+      "name": "find_personal_coach",
+      "title": "Find a personal coach",
+      "description": "Use this when the user wants a human coach of their own: 1:1 coaching, someone who writes their program for them, checks in each week, reviews how they move or answers their messages, for example \"I want a real coach for basketball\" or \"can someone coach me one on one?\". It returns the Phorme coaches taking 1:1 clients now, with what the coaching includes, how many spots are open and the coach's page, where the terms and joining are. It shows no prices, books nothing and changes nothing. Coaching is training, not medical care.",
+      "auth": "none",
+      "annotations": {
+        "title": "Find a personal coach",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "goal": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "What the user wants coaching for, in their words, only if they said."
+          },
+          "sport": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Their sport, only if they named one."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "coaches",
+          "limits"
+        ],
+        "properties": {
+          "coaches": {
+            "type": "array",
+            "description": "Each coach taking 1:1 clients: coach, coach_url, offer, summary, includes, spots (status, detail, open), page_url and how_it_starts."
           },
           "limits": {
             "type": "array",
