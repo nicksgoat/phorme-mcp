@@ -2,10 +2,10 @@
   "server": {
     "name": "phorme-training",
     "title": "Phorme Training",
-    "version": "1.7.0"
+    "version": "1.8.0"
   },
   "protocolVersion": "2025-06-18",
-  "instructions": "Phorme coaches through curated brains. Lead with the fit. Goal: find_coaching_brain. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import. Swap: find_exercise_swap. Places: find_gym_class, find_clinic. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; ask before saving; share the link, then render_training_import. Use only tool output; invent no ids, dates or loads. No prices or purchases.",
+  "instructions": "Phorme coaches via curated brains. Lead with the fit. Goal: find_coaching_brain. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import. Swap: find_exercise_swap. Places: find_gym_class, find_clinic; owner: check_place_in_ai. Log: get_training_history, get_lift_progress, get_planned_sessions. Warn, ask before saving, share the link, then render_training_import. Use only tool output; invent no ids, dates or loads. No prices or purchases.",
   "tools": [
     {
       "name": "preview_workout_import",
@@ -1319,6 +1319,123 @@
       }
     },
     {
+      "name": "check_place_in_ai",
+      "title": "Check a gym or clinic in AI answers",
+      "description": "Use this when the owner or manager of a gym, studio or sports clinic asks whether ChatGPT knows their place or recommends it, for example \"does ChatGPT recommend my gym?\" or \"what does AI say about my physio clinic in Austin?\". It asks OpenAI's model with web search two questions a customer would ask: about the place, and for the best places of its kind in its city. It returns whether the place was found, whether it was named among the best and who was named instead, which of five facts a customer needs were stated (where, hours, classes or treatments, prices, how to book), the pages it cited, and a link to the full result. Prices are reported only as stated or not. It takes up to a minute, reuses a check of the same place from the last week, and keeps the result for its share page; it changes nothing about the place on Phorme. It is for owners and managers, not for rating a place for someone choosing where to go.",
+      "auth": "none",
+      "annotations": {
+        "title": "Check a gym or clinic in AI answers",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place",
+          "city"
+        ],
+        "properties": {
+          "place": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80,
+            "description": "The gym or clinic's name, as the owner wrote it."
+          },
+          "city": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 60,
+            "description": "The city it is in."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "gyms",
+              "strength gyms",
+              "CrossFit gyms",
+              "HYROX gyms",
+              "yoga studios",
+              "pilates studios",
+              "boxing gyms",
+              "cycling studios",
+              "climbing gyms",
+              "physical therapy clinics",
+              "sports medicine clinics",
+              "chiropractors",
+              "sports massage therapists",
+              "recovery studios"
+            ],
+            "description": "What kind of place it is, as a customer would search. Defaults to gyms."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "identified",
+          "named_in_best_of_city",
+          "facts",
+          "result_url",
+          "limits"
+        ],
+        "properties": {
+          "place": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "identified": {
+            "type": "boolean",
+            "description": "Whether ChatGPT found this specific place."
+          },
+          "named_in_best_of_city": {
+            "type": "boolean",
+            "description": "Whether it was named when asked for the best of its kind in the city."
+          },
+          "named_instead": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Places named instead, when it was not."
+          },
+          "facts": {
+            "type": "array",
+            "description": "Each fact a customer needs: fact, stated, value (null for prices)."
+          },
+          "facts_stated": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "checked_at": {
+            "type": "string"
+          },
+          "result_url": {
+            "type": "string",
+            "description": "The full result on gyms.phor.me. Share it."
+          },
+          "limits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What this check does not show. Tell the user."
+          }
+        }
+      }
+    },
+    {
       "name": "find_exercise_swap",
       "title": "Find an exercise swap",
       "description": "Use this when the user needs a replacement for one exercise because they do not have the equipment, the station is taken, or they want a different option, for example no cable machine for cable rows. It returns up to five Phorme library movements of the same kind that the user's equipment allows, each with a demo link, and says so when it has to offer the nearest kind instead. It reads only and changes nothing, including any saved plan. Do not use it to work around pain or injury.",
@@ -1598,7 +1715,7 @@
     {
       "name": "get_my_coaching_business",
       "title": "Get my coaching brains",
-      "description": "Use this when a Phorme coach asks about their own coaching brains: how many members train under each, who went quiet, what they have earned, and whether a note to members can go today. It reads only and changes nothing. It needs a connected Phorme account; an account without a coaching brain can start one with start_my_coaching_brain.",
+      "description": "Use this when a Phorme coach asks about their own coaching brains: how many members train under each, who went quiet, what they have earned, and whether a note to members can go today. It reads only and changes nothing. It needs a connected Phorme account; an account without a coaching brain gets the address of the coach console.",
       "auth": "OAuth",
       "annotations": {
         "title": "Get my coaching brains",
@@ -1635,7 +1752,7 @@
     {
       "name": "start_my_coaching_brain",
       "title": "Start my coaching brain",
-      "description": "Use this when a coach or trainer wants to turn their own method into a Phorme coaching brain and get_my_coaching_business shows they have none yet, or they ask for a new one. It creates a draft brain with the name they chose and their method in their own words; members see nothing until the coach publishes it in the coach console. Then offer save_program_to_my_coaching_brain for their first program. It needs a connected Phorme account; signing in with a phone number creates one.",
+      "description": "Use this when a coach or trainer wants to turn their own method into a Phorme coaching brain and has none yet, or asks for a new one. It creates a draft brain with the name they chose and their method in their own words; members see nothing until the coach publishes it in the coach console. A first program can then be saved to it as a draft. It needs a connected Phorme account; signing in with a phone number creates one.",
       "auth": "OAuth",
       "annotations": {
         "title": "Start my coaching brain",
