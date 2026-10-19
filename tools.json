@@ -2,10 +2,10 @@
   "server": {
     "name": "phorme-training",
     "title": "Phorme Training",
-    "version": "1.11.0"
+    "version": "1.15.0"
   },
   "protocolVersion": "2025-06-18",
-  "instructions": "Lead with the best-fit coaching brain. Goal: find_coaching_brain; 1:1: find_personal_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import; swap: find_exercise_swap. Places: find_gym_class, find_clinic; owner: check_place_in_ai. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm saves; share the link, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
+  "instructions": "Goal: find_coaching_brain; 1:1: find_personal_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import, find_exercise_swap. Places: find_gym_class, book_gym_class, find_clinic. Gym owner: check_place_in_ai, get_gym_report. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm writes; share links, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
   "tools": [
     {
       "name": "preview_workout_import",
@@ -1127,7 +1127,7 @@
     {
       "name": "find_coaching_brain",
       "title": "Find a Phorme coaching brain",
-      "description": "Use this when the user wants a way to train for a goal or sport, for example \"I want to get more explosive for basketball\", \"build muscle three days a week\" or \"train for a half marathon\", and has not picked a programme. Phorme coaching brains are curated training methods: a coach, the principles the method trains by, and a coach-built programme. It returns up to three brains that fit, best first, each with its coach, focus, how it trains and its programmes with weeks and days a week. It reads only and changes nothing. Do not use it for injury rehab or nutrition.",
+      "description": "Use this when the user wants a way to train for a goal or sport, for example \"I want to get more explosive for basketball\", \"build muscle three days a week\" or \"train for a half marathon\", or wants to train with a named coach, for example \"train with Cameron Goodson\", and has not picked a programme. Phorme coaching brains are curated training methods: a coach, the principles the method trains by, and a coach-built programme. It returns up to three brains that fit, best first, each with its coach, focus, how it trains and its programmes with weeks and days a week; with a coach named, only that coach's brains. It reads only and changes nothing. Do not use it for injury rehab or nutrition.",
       "auth": "none",
       "annotations": {
         "title": "Find a Phorme coaching brain",
@@ -1158,6 +1158,11 @@
             "minimum": 1,
             "maximum": 7,
             "description": "Training days a week, only if the user said."
+          },
+          "coach": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "A coach the user named, for example \"Cameron Goodson\". Only that coach's brains are returned."
           }
         }
       },
@@ -1189,7 +1194,7 @@
     {
       "name": "find_gym_class",
       "title": "Find a Phorme gym or class",
-      "description": "Use this when the user wants a gym, studio or class to train at in person, for example \"a strength class in Austin this week\" or \"a gym near me\". It returns up to five Phorme gyms and studios in the city named or within 60 km of the position given, nearest or best matching first, each with its page on phor.me and its classes in the coming days with the local start time, length, places left and a link to book on phor.me. It reads only, shows no prices and books nothing.",
+      "description": "Use this when the user wants a gym, studio or class to train at in person, for example \"a strength class in Austin this week\" or \"a gym near me\". It returns up to five Phorme gyms, studios and other places to train in the city named or within 60 km (or radius_km) of the position given, nearest or best matching first, each with its page on phor.me and its classes in the coming days with the class id, local start time, length, places left and a link to book on phor.me. When nothing matches it returns alternatives: the nearest places further out, and a home plan from a Phorme coaching brain. It reads only and shows no prices; booking a class for a signed-in user is a separate step.",
       "auth": "none",
       "annotations": {
         "title": "Find a Phorme gym or class",
@@ -1228,6 +1233,12 @@
             "minimum": 1,
             "maximum": 14,
             "description": "How many days ahead to look. Default 7."
+          },
+          "radius_km": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300,
+            "description": "How far from the shared position to look, in km. Default 60. Use a larger one only when the user said they would travel."
           }
         }
       },
@@ -1240,7 +1251,7 @@
         "properties": {
           "places": {
             "type": "array",
-            "description": "Gyms and studios, nearest or best matching first: name, kind, line, city, country, distance_km, page_url and classes (title, line, starts, minutes, spots_left, book_url)."
+            "description": "Gyms, studios and other places to train, nearest or best matching first: place_id, name, kind, line, city, country, distance_km, page_url and classes (class_id, the id book_gym_class takes, then title, line, starts, minutes, spots_left, book_url)."
           },
           "limits": {
             "type": "array",
@@ -1248,6 +1259,167 @@
               "type": "string"
             },
             "description": "What this does not cover. Tell the user."
+          },
+          "alternatives": {
+            "type": "array",
+            "description": "When nothing matched or no class is scheduled: kind (wider_radius, other_cities, home_plan), line (what to offer), tool, and for wider_radius the nearest places further out. Offer them; never leave the user with nothing."
+          }
+        }
+      }
+    },
+    {
+      "name": "book_gym_class",
+      "title": "Book a Phorme gym class",
+      "description": "Use this when a signed-in user wants a place in one class at a Phorme gym or studio. Confirm the class, the day and time, and the gym with the user first, and set confirmation to true only after they said yes. It books the class for the connected Phorme account: booked when there is a spot, on the waitlist when it is full, a spot held for 15 minutes when the class is paid, or a request the gym is told about when the gym has not opened booking on Phorme yet. A paid class is paid on Phorme's own payment page, through a link in the result. This tool takes no payment, names no amount and never sells a subscription or membership. Booking the same class again returns the same booking. It needs a connected Phorme account with the training:write permission.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Book a Phorme gym class",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "class_id",
+          "confirmation"
+        ],
+        "properties": {
+          "class_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The class_id of the class, from find_gym_class."
+          },
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of its gym or studio, from the same find_gym_class result."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the user said yes to this class, day, time and gym."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "status",
+          "booking_id",
+          "book_url",
+          "next"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "booked",
+              "waitlisted",
+              "pending_payment",
+              "requested",
+              "book_on_phorme"
+            ],
+            "description": "booked: the user is in. waitlisted: the class is full; Phorme moves them up if a spot opens. pending_payment: the spot is held 15 minutes while they pay at pay_url. requested: the gym is told they asked; held up to 7 days, not a booking yet. book_on_phorme: nothing was booked; give them book_url."
+          },
+          "booking_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The booking, for cancel_gym_booking."
+          },
+          "class": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "title, starts (local time at the gym) and minutes."
+          },
+          "place": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "name, city and page_url of the gym or studio."
+          },
+          "pay_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Phorme's own payment page for this booking, only when status is pending_payment."
+          },
+          "book_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The class page on phor.me."
+          },
+          "next": {
+            "type": "string",
+            "description": "What to tell the user next."
+          }
+        }
+      }
+    },
+    {
+      "name": "cancel_gym_booking",
+      "title": "Cancel a Phorme gym booking",
+      "description": "Use this when a signed-in user wants to give up a class they booked, are on the waitlist for, or asked a gym for on Phorme. Confirm which class with the user first, and set confirmation to true only after they said yes. It cancels that booking for the connected Phorme account and frees the spot for the next person on the waitlist. It takes the booking id, or the class id of the booked class. Sales are final, so a paid class is not refunded. It needs a connected Phorme account with the training:write permission.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Cancel a Phorme gym booking",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "confirmation"
+        ],
+        "properties": {
+          "booking_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The booking_id from book_gym_class. Give this or class_id."
+          },
+          "class_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The class_id of the booked class, when the booking_id is not known."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the user said yes to cancelling this class."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "cancelled",
+          "next"
+        ],
+        "properties": {
+          "cancelled": {
+            "type": "boolean"
+          },
+          "booking_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "next": {
+            "type": "string",
+            "description": "What to tell the user next."
           }
         }
       }
@@ -1369,13 +1541,14 @@
     {
       "name": "check_place_in_ai",
       "title": "Check a gym, clinic or race in AI answers",
-      "description": "Use this when the owner or manager of a gym, studio, sports clinic or race asks whether ChatGPT knows their place or race or recommends it, for example \"does ChatGPT recommend my gym?\", \"what does AI say about my physio clinic in Austin?\" or \"does ChatGPT know our triathlon?\". It asks OpenAI's model with web search two questions a customer or athlete would ask: about the place or race, and for the best of its kind in its city. It returns whether it was found, whether it was named among the best and who was named instead, which of five facts a customer needs were stated (where, hours, classes or treatments, prices, how to book; for a race: where it starts, race date, course, entry fee, how to register), the pages it cited, and a link to the full result. Prices are reported only as stated or not. It takes up to a minute, reuses a check of the same place from the last week, and keeps the result for its share page; it changes nothing about the place on Phorme. It is for owners and managers, not for rating a place for someone choosing where to go.",
+      "description": "Use this when the owner or manager of a gym, studio, sports clinic or race asks whether ChatGPT knows their place or race or recommends it, for example \"does ChatGPT recommend my gym?\", \"what does AI say about my physio clinic in Austin?\" or \"does ChatGPT know our triathlon?\". It asks OpenAI's model with web search two questions a customer or athlete would ask: about the place or race, and for the best of its kind in its city. It returns whether it was found, whether it was named among the best and who was named instead, which of five facts a customer needs were stated (where, hours, classes or treatments, prices, how to book; for a race: where it starts, race date, course, entry fee, how to register), the pages it cited, and a link to the full result. Prices are reported only as stated or not, and a fact counts as stated only when the answer gave it. It also returns a free next step: a link to claim the place on Phorme (for a race, the race organiser page). It takes up to a minute, reuses a check of the same place from the last week, and saves the result as a share page; it changes nothing about the place on Phorme. It is for owners and managers, not for rating a place for someone choosing where to go.",
       "auth": "none",
       "annotations": {
         "title": "Check a gym, clinic or race in AI answers",
         "readOnlyHint": false,
         "destructiveHint": false,
-        "openWorldHint": true
+        "openWorldHint": true,
+        "idempotentHint": true
       },
       "inputSchema": {
         "type": "object",
@@ -1477,6 +1650,14 @@
           "result_url": {
             "type": "string",
             "description": "The full result on gyms.phor.me. Share it."
+          },
+          "next_step_url": {
+            "type": "string",
+            "description": "Free next step: claim the place on Phorme (a race: the organiser page). It names no price."
+          },
+          "next_step": {
+            "type": "string",
+            "description": "What the next step does, in one line."
           },
           "limits": {
             "type": "array",
@@ -2052,6 +2233,1549 @@
               "string",
               "null"
             ]
+          }
+        }
+      }
+    },
+    {
+      "name": "get_gym_report",
+      "title": "Get my gym report",
+      "description": "Use this when a gym, studio or clinic owner asks about their own places on Phorme: what is listed, what is live, and how each place did, for example \"how is my gym doing on Phorme?\" or \"did anyone book this week?\". It returns each place the connected account lists, with its page and status, and its report: times shown by assistants, page views, asks held, bookings, requests, members and the share earned. A place on the free listing shows a little reach and what it missed; the rest is locked, the same as the web console. It reads only and changes nothing. It needs a connected Phorme account.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Get my gym report",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "places",
+          "report",
+          "console_url",
+          "next"
+        ],
+        "properties": {
+          "places": {
+            "type": "array",
+            "description": "Each place the account lists, as create_or_claim_place returns it."
+          },
+          "report": {
+            "type": "array",
+            "description": "One per place. tier free: views_30d, times_shown_30d, ai_check, missed (bookings, asked, members), asks_held, locked and plan_url. tier plan: times_shown, visits, assistant_reads_30d, clicks, bookings, requests, asks_held, members, share_earned_cents, ai_check, asked and funnel."
+          },
+          "visits_unavailable": {
+            "type": "boolean",
+            "description": "True when page visits could not be read just now."
+          },
+          "claims": {
+            "type": "array",
+            "description": "The account's open claims on places nobody ran: claim_id, place_id, place_name, status (code_sent or review), channel, sent_to (masked), expires_at."
+          },
+          "console_url": {
+            "type": "string"
+          },
+          "next": {
+            "type": "string",
+            "description": "What to tell the owner next."
+          }
+        }
+      }
+    },
+    {
+      "name": "create_or_claim_place",
+      "title": "List or claim my place",
+      "description": "Use this when a gym, studio or clinic owner wants their place on Phorme, for example after an AI check, or says \"list my gym\". Confirm the name, city and address with the owner first, and set confirmation to true only after they said yes. It lists the place for the connected account as a draft nobody sees yet, with its page facts, and finds the map pin from the address. If the account already lists a place with that name in that city it returns that place and changes nothing. Listing is free; it takes no payment and starts no plan. It needs a connected Phorme account.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "List or claim my place",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "city",
+          "country",
+          "confirmation"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 60,
+            "description": "The place's name, as the owner wrote it."
+          },
+          "city": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "country": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60,
+            "description": "For example \"United States\"."
+          },
+          "line": {
+            "type": "string",
+            "maxLength": 140,
+            "description": "One line on what the place is, in the owner's words."
+          },
+          "about": {
+            "type": "string",
+            "maxLength": 600,
+            "description": "One or two plain sentences about the place, in the owner's words."
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "The street address. The map pin is found from it."
+          },
+          "hours": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "description": "Opening hours, one line each, for example [\"Mon to Fri, 6 am to 9 pm\", \"Sat, 8 am to noon\"]."
+          },
+          "book_url": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "The place's own booking page, starting with https://."
+          },
+          "book_label": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "The words on its booking button, for example \"Book a class\"."
+          },
+          "website": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "The place's own website, starting with https://."
+          },
+          "request_email": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Where booking confirmations and requests are emailed. Never shown in public."
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30,
+            "description": "The place's public phone number, as the owner gave it."
+          },
+          "prices": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "maxItems": 12,
+            "description": "What training at the place costs, shown on its page, in the owner's own words: one line each, for example \"Drop-in 25 dollars\", or { label, amount (in dollars) or amount_cents, period, note }. At most 12; an empty list clears them. Repeat them only to the owner.",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "label"
+                  ],
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "maxLength": 60,
+                      "description": "For example \"Drop-in\" or \"Ten class pack\"."
+                    },
+                    "amount": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100000,
+                      "description": "In dollars."
+                    },
+                    "amount_cents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 10000000
+                    },
+                    "period": {
+                      "type": "string",
+                      "enum": [
+                        "drop_in",
+                        "day",
+                        "week",
+                        "month",
+                        "year",
+                        "class_pack",
+                        "other"
+                      ]
+                    },
+                    "note": {
+                      "type": "string",
+                      "maxLength": 120
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "timezone": {
+            "type": "string",
+            "maxLength": 60,
+            "description": "The place's IANA time zone, for example \"America/Chicago\"."
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude of the map pin, only to set it by hand."
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude of the map pin, only to set it by hand."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "gym",
+              "physio",
+              "sports_medicine",
+              "chiropractic",
+              "massage",
+              "recovery"
+            ],
+            "description": "What the place is: gym (also studios and boxes) or a kind of care."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to listing this place."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "status",
+          "place",
+          "next"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "created",
+              "existing"
+            ]
+          },
+          "place": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The place: place_id, name, kind, line, city, country, address, hours, about, book_url, request_email, request_phone (texts, never public), prices, phone, timezone, status (draft or live), page_url, upcoming_classes, brain_id, on_plan, held_requests and plan_url (the plan on phor.me, a price-free link; null when on the plan)."
+          },
+          "next": {
+            "type": "string",
+            "description": "What to tell the owner next."
+          }
+        }
+      }
+    },
+    {
+      "name": "update_place",
+      "title": "Update my place",
+      "description": "Use this when an owner wants to change what their place's page says: name, address, hours, booking link, what kind of place it is, the line about it, its time zone, its phone, its price list or the email for requests. Read the change back to the owner first, and set confirmation to true only after they said yes. Only the things given change; an empty value clears one. A new address moves the map pin. A live page shows the change at once. The price list only shows what the place charges; nothing is sold here. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Update my place",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place_id",
+          "confirmation"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of one of the owner's places, from get_gym_report or create_or_claim_place."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 60
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 60
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 60
+          },
+          "line": {
+            "type": "string",
+            "maxLength": 140,
+            "description": "One line on what the place is, in the owner's words."
+          },
+          "about": {
+            "type": "string",
+            "maxLength": 600,
+            "description": "One or two plain sentences about the place, in the owner's words."
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "The street address. The map pin is found from it."
+          },
+          "hours": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "description": "Opening hours, one line each, for example [\"Mon to Fri, 6 am to 9 pm\", \"Sat, 8 am to noon\"]."
+          },
+          "book_url": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "The place's own booking page, starting with https://."
+          },
+          "book_label": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "The words on its booking button, for example \"Book a class\"."
+          },
+          "website": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "The place's own website, starting with https://."
+          },
+          "request_email": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Where booking confirmations and requests are emailed. Never shown in public."
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30,
+            "description": "The place's public phone number, as the owner gave it."
+          },
+          "prices": {
+            "type": [
+              "string",
+              "array"
+            ],
+            "maxItems": 12,
+            "description": "What training at the place costs, shown on its page, in the owner's own words: one line each, for example \"Drop-in 25 dollars\", or { label, amount (in dollars) or amount_cents, period, note }. At most 12; an empty list clears them. Repeat them only to the owner.",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "label"
+                  ],
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "maxLength": 60,
+                      "description": "For example \"Drop-in\" or \"Ten class pack\"."
+                    },
+                    "amount": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100000,
+                      "description": "In dollars."
+                    },
+                    "amount_cents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 10000000
+                    },
+                    "period": {
+                      "type": "string",
+                      "enum": [
+                        "drop_in",
+                        "day",
+                        "week",
+                        "month",
+                        "year",
+                        "class_pack",
+                        "other"
+                      ]
+                    },
+                    "note": {
+                      "type": "string",
+                      "maxLength": 120
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "timezone": {
+            "type": "string",
+            "maxLength": 60,
+            "description": "The place's IANA time zone, for example \"America/Chicago\"."
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude of the map pin, only to set it by hand."
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude of the map pin, only to set it by hand."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "gym",
+              "physio",
+              "sports_medicine",
+              "chiropractic",
+              "massage",
+              "recovery"
+            ],
+            "description": "What the place is: gym (also studios and boxes) or a kind of care."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to these changes."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "place",
+          "next"
+        ],
+        "properties": {
+          "place": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The place: place_id, name, kind, line, city, country, address, hours, about, book_url, request_email, request_phone (texts, never public), prices, phone, timezone, status (draft or live), page_url, upcoming_classes, brain_id, on_plan, held_requests and plan_url (the plan on phor.me, a price-free link; null when on the plan)."
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "set_class_schedule",
+      "title": "Set my class schedule",
+      "description": "Use this when an owner wants to see, add, change or cancel a class at their place. action list reads the schedule and changes nothing. For add, edit and cancel, read the class, day and time back to the owner first, and set confirmation to true only after they said yes. A class people booked keeps its time, length and price; a class members paid for cannot be cancelled here. Members pay for a paid class on Phorme's own payment page; this tool takes no payment. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Set my class schedule",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place_id",
+          "action"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of one of the owner's places, from get_gym_report or create_or_claim_place."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "list",
+              "add",
+              "edit",
+              "cancel"
+            ]
+          },
+          "class_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "For edit and cancel: the class_id from action list."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 60,
+            "description": "The class name, for example \"Barbell basics\"."
+          },
+          "line": {
+            "type": "string",
+            "maxLength": 140,
+            "description": "One line on the class."
+          },
+          "starts_at": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "When it starts: \"YYYY-MM-DDTHH:MM\" in the place's own time, or an ISO time with its offset."
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 480
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "description": "How many people it takes."
+          },
+          "price_usd": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000,
+            "description": "What one place in the class costs, as the owner set it. 0 or left out for free. Never repeat it to anyone but the owner."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to this class change."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "place_id",
+          "next"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string"
+          },
+          "classes": {
+            "type": "array",
+            "description": "class_id, title, line, starts (local), starts_at, minutes, capacity, booked, paid, status."
+          },
+          "class": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "publish_place",
+      "title": "Put my place live",
+      "description": "Use this when an owner wants their place live on Phorme: its page on phor.me, the app's map and the Phorme connector. Confirm with the owner first, and set confirmation to true only after they said yes. Going live needs an email for booking confirmations and requests: request_email, else the place's own, else the account's. Listing is free; when someone asks to book a place that is not on the gym plan, the ask is held 7 days and the owner is told. It takes no payment and starts no plan. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Put my place live",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place_id",
+          "confirmation"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of one of the owner's places, from get_gym_report or create_or_claim_place."
+          },
+          "request_email": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Where booking confirmations and requests are emailed. Never shown in public."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to putting this place live."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "place",
+          "next"
+        ],
+        "properties": {
+          "place": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The place: place_id, name, kind, line, city, country, address, hours, about, book_url, request_email, request_phone (texts, never public), prices, phone, timezone, status (draft or live), page_url, upcoming_classes, brain_id, on_plan, held_requests and plan_url (the plan on phor.me, a price-free link; null when on the plan)."
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "unpublish_place",
+      "title": "Take my place down",
+      "description": "Use this when an owner wants their place off Phorme for now. Confirm with the owner first, and set confirmation to true only after they said yes. Its page, the app's map and the Phorme connector stop listing it; its details and classes are kept, so it can be put live again. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Take my place down",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place_id",
+          "confirmation"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of one of the owner's places, from get_gym_report or create_or_claim_place."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to taking this place down."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "place",
+          "next"
+        ],
+        "properties": {
+          "place": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The place: place_id, name, kind, line, city, country, address, hours, about, book_url, request_email, request_phone (texts, never public), prices, phone, timezone, status (draft or live), page_url, upcoming_classes, brain_id, on_plan, held_requests and plan_url (the plan on phor.me, a price-free link; null when on the plan)."
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "start_gym_brain",
+      "title": "Start my gym's coaching brain",
+      "description": "Use this when an owner wants a coaching brain for their place, so members train with the gym's own coach in the Phorme app. Confirm with the owner first, and set confirmation to true only after they said yes. In one step it makes a brain from the place's name, line and classes, gives it a starting program from the Phorme library, publishes it and puts the place's members under it, the same as the console's one-click start. The owner can change it in the builder after. Free on the free listing too. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Start my gym's coaching brain",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place_id",
+          "confirmation"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of one of the owner's places, from get_gym_report or create_or_claim_place."
+          },
+          "days_per_week": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "Training days a week the starting program is built for. Default 3."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to starting a coaching brain for this place."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "place_id",
+          "brain_id",
+          "next"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string"
+          },
+          "brain_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "published": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "open": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Publish checks still open, when it stayed a draft."
+          },
+          "builder_url": {
+            "type": "string"
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "set_member_cover",
+      "title": "Cover my members",
+      "description": "Use this when an owner on the gym plan wants to pay for their members' Phorme membership at one place, so members train free, or wants to stop. Confirm with the owner first, and set confirmation to true only after they said yes. It turns the switch on or off and can lower the cap of members covered (up to 50). Members join from the app and the place approves them. A place not on the gym plan cannot turn it on; the result then gives plan_url, the plan on phor.me. It takes no payment here. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Cover my members",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place_id",
+          "on",
+          "confirmation"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of one of the owner's places, from get_gym_report or create_or_claim_place."
+          },
+          "on": {
+            "type": "boolean",
+            "description": "true to cover members, false to stop."
+          },
+          "cap": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 50,
+            "description": "Most members covered at this place. Default 50."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to this change to member cover."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "place_id",
+          "next"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string"
+          },
+          "cover": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "on, plan, cap and members covered."
+          },
+          "plan_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "list_held_requests",
+      "title": "List asks waiting for my gym",
+      "description": "Use this when an owner asks who wants to book or visit their place, for example \"who asked to book this week?\". At a place not on the gym plan, class bookings and 1:1 requests are held for 7 days. It returns each one waiting: its hold_id, the place, the class and its local time (or that it is a 1:1 request), the member's first name, their note and best times, when it expires, and whether it can be accepted now. It reads only and changes nothing. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "List asks waiting for my gym",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Only this place. Leave out for all of the owner's places."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "held",
+          "next"
+        ],
+        "properties": {
+          "held": {
+            "type": "array",
+            "description": "hold_id, place_id, place_name, kind (class or session), class (title, starts), first_name, note, times, asked_at, expires_at, can_accept and plan_url (the plan on phor.me, a price-free link, when it cannot be accepted yet)."
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "answer_held_request",
+      "title": "Answer an ask waiting for my gym",
+      "description": "Use this when an owner wants to accept or decline one ask held for the plan at their place, by its hold_id. Read the ask back to the owner first, and set confirmation to true only after they said yes. Accept books the member in (a paid class is held while they pay on Phorme's own page; a full class puts them on the waitlist), or sends a 1:1 request on to the place's email. Decline ends it, with the owner's short note when they gave one. Either way the member hears. Accepting needs the gym plan at that place; the result then gives plan_url instead. It takes no payment. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Answer an ask waiting for my gym",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "hold_id",
+          "answer",
+          "confirmation"
+        ],
+        "properties": {
+          "hold_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The hold_id from list_held_requests."
+          },
+          "answer": {
+            "type": "string",
+            "enum": [
+              "accept",
+              "decline"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "For decline: a short note to the member, in the owner's words."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to this answer."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "hold",
+          "next"
+        ],
+        "properties": {
+          "hold": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "id, outcome (released, declined or expired) and booking_status."
+          },
+          "plan_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "claim_place",
+      "title": "Claim a place nobody runs",
+      "description": "Use this when an owner says a gym Phorme already lists is theirs and nobody runs it on Phorme yet, for example \"that gym is mine\". Confirm the place with the owner first, and set confirmation to true only after they said yes. It never hands the place over by itself: Phorme sends a six digit code to the email or phone the place has on file, not to the person asking. Whoever reads that inbox or phone gives them the code, and entering it makes them the owner. A place with neither on file waits for Phorme's team. It takes no payment. It needs a connected Phorme account.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Claim a place nobody runs",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place_id",
+          "confirmation"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of the listed place, from find_gym_class."
+          },
+          "via": {
+            "type": "string",
+            "enum": [
+              "email",
+              "phone"
+            ],
+            "description": "Where the code goes, when the place has both on file. Default email."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to claiming this place."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "claim",
+          "next"
+        ],
+        "properties": {
+          "claim": {
+            "type": "object",
+            "description": "claim_id, place_id, place_name, status (code_sent or review), channel, sent_to (masked), expires_at."
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "verify_place_claim",
+      "title": "Enter my place claim code",
+      "description": "Use this when an owner has the six digit code Phorme sent to their place's own email or phone after they claimed it. Read the code back to the owner first, and set confirmation to true only after they said yes. A right code makes the connected account the place's owner; a wrong one changes nothing, and after five wrong tries or 24 hours the place must be claimed again. It takes no payment. It needs a connected Phorme account.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Enter my place claim code",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claim_id",
+          "code",
+          "confirmation"
+        ],
+        "properties": {
+          "claim_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The claim_id from claim_place."
+          },
+          "code": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 12,
+            "description": "The six digit code, as the owner gave it."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to entering this code."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "claim",
+          "next"
+        ],
+        "properties": {
+          "claim": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "place": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The place: place_id, name, kind, line, city, country, address, hours, about, book_url, request_email, request_phone (texts, never public), prices, phone, timezone, status (draft or live), page_url, upcoming_classes, brain_id, on_plan, held_requests and plan_url (the plan on phor.me, a price-free link; null when on the plan)."
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "cover_member",
+      "title": "Cover one member",
+      "description": "Use this when an owner on the gym plan wants to see who is covered or asked to be at one place, or to invite, approve or remove one member, for example \"invite my member Sam to train free\". action list reads who is listed and changes nothing. For invite (by the member's phone), approve (a member who asked) and remove, read it back to the owner first, and set confirmation to true only after they said yes. An invite sends the phone a text to join; the member hears once when they are covered or removed. Cover counts only while the gym plan covers the place, up to its cap; past it, new members pay as normal. It takes no payment here. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Cover one member",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place_id",
+          "action"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of one of the owner's places, from get_gym_report or create_or_claim_place."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "list",
+              "invite",
+              "approve",
+              "remove"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30,
+            "description": "For invite: the member's phone with its country code, for example +15125550100."
+          },
+          "member_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "For approve and remove: the member_id from action list."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to this change to who is covered."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "place_id",
+          "next"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string"
+          },
+          "cover": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "on, plan, state (active, needs_plan or off), cap, covered, asked, invited and left."
+          },
+          "members": {
+            "type": "array",
+            "description": "For list: member_id, label (a name, or the phone's last four), status (asked, invited, covered), counts, asked_at, invited_at, covered_at."
+          },
+          "member": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The member changed, as in members."
+          },
+          "plan_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The plan on phor.me, a price-free link, when the place is not on it."
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "update_gym_brain",
+      "title": "Change my gym's coaching brain",
+      "description": "Use this when an owner wants to change how their place's coaching brain sounds or looks: its name, its one line, its voice (how the coach talks to members), its method, its colour or its cover photo. Read the change back to the owner first, and set confirmation to true only after they said yes. Only the things given change; an empty value clears one. It saves to the brain; members get it once the brain is published again. The place needs a coaching brain first. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Change my gym's coaching brain",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place_id",
+          "confirmation"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of one of the owner's places, from get_gym_report or create_or_claim_place."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 40,
+            "description": "The coach's name members see."
+          },
+          "tagline": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "One line under the name."
+          },
+          "voice": {
+            "type": "string",
+            "maxLength": 4000,
+            "description": "How the coach talks to members, in the owner's words."
+          },
+          "method": {
+            "type": "string",
+            "maxLength": 4000,
+            "description": "How the gym trains: the principles the coach plans by."
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "The brand colour, as #rrggbb."
+          },
+          "cover_image_url": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "An https link to the cover photo."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to these changes to the coaching brain."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "place_id",
+          "brain_id",
+          "next"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string"
+          },
+          "brain_id": {
+            "type": "string"
+          },
+          "brain": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "name, tagline, look, persona (the voice), method, status and publish_version."
+          },
+          "lint": {
+            "type": "array",
+            "description": "Lines in the voice or method to look at before members read them."
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "publish_gym_brain",
+      "title": "Publish my gym's coaching brain",
+      "description": "Use this when an owner wants the changes to their place's coaching brain to reach members, for example after its voice, look or programs changed. Confirm with the owner first, and set confirmation to true only after they said yes. It runs the same publish checks as the console and publishes the brain when they pass; when one fails it says what is left and members see no change. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Publish my gym's coaching brain",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place_id",
+          "confirmation"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of one of the owner's places, from get_gym_report or create_or_claim_place."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to publishing the coaching brain."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "place_id",
+          "brain_id",
+          "published",
+          "next"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string"
+          },
+          "brain_id": {
+            "type": "string"
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "checks": {
+            "type": "array",
+            "description": "label, ok and detail for each publish check."
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "set_booking_notices",
+      "title": "Set where booking notices go",
+      "description": "Use this when an owner wants booking and ask notices for a place sent somewhere else, for example \"text my bookings to my phone\". send_to is an email, or a phone that gets them as texts; one at a time, as in the console. An empty send_to sends them to the account's own phone or email. Read it back to the owner first, and set confirmation to true only after they said yes. The phone is never shown on the place's page. It needs a connected Phorme account that owns the place.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Set where booking notices go",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "place_id",
+          "send_to",
+          "confirmation"
+        ],
+        "properties": {
+          "place_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The place_id of one of the owner's places, from get_gym_report or create_or_claim_place."
+          },
+          "send_to": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "An email, or a phone with its country code for texts, for example +15125550100. \"\" for the account's own."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to where booking notices go."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "place",
+          "next"
+        ],
+        "properties": {
+          "place": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The place: place_id, name, kind, line, city, country, address, hours, about, book_url, request_email, request_phone (texts, never public), prices, phone, timezone, status (draft or live), page_url, upcoming_classes, brain_id, on_plan, held_requests and plan_url (the plan on phor.me, a price-free link; null when on the plan)."
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_gym_billing_link",
+      "title": "Get my gym billing link",
+      "description": "Use this when an owner on the gym plan wants to change the card, see invoices or change how many places the plan covers. It returns a link to Stripe's own billing page for the owner to open. It is a link only: nothing is paid or changed in the chat, and it changes nothing by itself. It needs a connected Phorme account.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Get my gym billing link",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "console_url",
+          "next"
+        ],
+        "properties": {
+          "billing_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stripe's own billing page, or null when it opens from the console."
+          },
+          "console_url": {
+            "type": "string",
+            "description": "The Plan tab of the console on phor.me."
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_payouts",
+      "title": "Get my payouts",
+      "description": "Use this when an owner asks what Phorme paid them, or what goes out next, for example \"what did Phorme pay my gym?\". It returns what the account earned, what was paid out, what is going out, what is owed now, whether a bank is set up, and each recent payout. It reads only and changes nothing. It needs a connected Phorme account.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Get my payouts",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "payouts",
+          "console_url",
+          "next"
+        ],
+        "properties": {
+          "balance": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "earned_cents, paid_cents, going_out_cents, available_cents, min_payout_cents and payouts_ready. Null when it is read in the console."
+          },
+          "payouts": {
+            "type": "array",
+            "description": "payout_id, amount_cents, status (pending, paid or failed) and created_at, newest first."
+          },
+          "console_url": {
+            "type": "string"
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_payout_setup_link",
+      "title": "Get my payout setup link",
+      "description": "Use this when an owner wants their share paid to their bank and has not set it up, for example when no bank is set up yet. Confirm with the owner first, and set confirmation to true only after they said yes. It returns a link to Stripe's own form, where the owner gives their bank to Stripe. It is a link only: the bank is never given in the chat, and it takes no payment. It needs a connected Phorme account.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Get my payout setup link",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "confirmation"
+        ],
+        "properties": {
+          "country": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "description": "The two letter country of the bank, for example US. Default US."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to setting up payouts."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "console_url",
+          "next"
+        ],
+        "properties": {
+          "setup_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stripe's own form, or null when it opens from the console."
+          },
+          "console_url": {
+            "type": "string"
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "set_owner_email",
+      "title": "Set my owner email",
+      "description": "Use this when an owner who signed in by phone wants notices about their gym plan sent to an email. Read the email back to the owner first, and set confirmation to true only after they said yes. An empty email clears it, and notices go to the account's own email or phone. It is never shown to members. It needs a connected Phorme account.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Set my owner email",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "confirmation"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "The owner's email, or \"\" to clear it."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set to true only after the owner said yes to this email."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "owner_email",
+          "next"
+        ],
+        "properties": {
+          "owner_email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "next": {
+            "type": "string"
           }
         }
       }
