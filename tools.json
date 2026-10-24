@@ -1127,7 +1127,7 @@
     {
       "name": "find_coaching_brain",
       "title": "Find a Phorme coaching brain",
-      "description": "Use this when the user wants a way to train for a goal or sport, for example \"I want to get more explosive for basketball\", \"build muscle three days a week\" or \"train for a half marathon\", or wants to train with a named coach, for example \"train with Cameron Goodson\", and has not picked a programme. Phorme coaching brains are curated training methods: a coach, the principles the method trains by, and a coach-built programme. It returns up to three brains that fit, best first, each with its coach, focus, how it trains and its programmes with weeks and days a week; with a coach named, only that coach's brains. It reads only and changes nothing. Do not use it for injury rehab or nutrition.",
+      "description": "Use this when the user wants a way to train for a goal or sport, for example \"I want to get more explosive for basketball\", \"build muscle three days a week\" or \"train for a half marathon\", or wants to train with a named coach, for example \"train with Cameron Goodson\", and has not picked a programme, or has a coach code someone gave them, for example K7Q2-XR4D. Phorme coaching brains are curated training methods: a coach, the principles the method trains by, and a coach-built programme. It returns up to three brains that fit, best first, each with its coach, focus, how it trains and its programmes with weeks and days a week; with a coach named, only that coach's brains; with a code, the one brain it belongs to and its page. It reads only and changes nothing. Do not use it for injury rehab or nutrition.",
       "auth": "none",
       "annotations": {
         "title": "Find a Phorme coaching brain",
@@ -1138,15 +1138,12 @@
       "inputSchema": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "goal"
-        ],
         "properties": {
           "goal": {
             "type": "string",
             "minLength": 1,
             "maxLength": 200,
-            "description": "What the user wants from training, in their words, for example \"jump higher\" or \"first HYROX race\"."
+            "description": "What the user wants from training, in their words, for example \"jump higher\" or \"first HYROX race\". Needed unless a code is given."
           },
           "sport": {
             "type": "string",
@@ -1163,6 +1160,11 @@
             "type": "string",
             "maxLength": 80,
             "description": "A coach the user named, for example \"Cameron Goodson\". Only that coach's brains are returned."
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "A Phorme coach code exactly as the user gave it, for example \"K7Q2-XR4D\", or a phor.me/c/ link. Only when they gave one."
           }
         }
       },
@@ -1176,6 +1178,10 @@
         "properties": {
           "goal": {
             "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "description": "The coach code that was looked up, when one was given."
           },
           "brains": {
             "type": "array",
@@ -2233,6 +2239,206 @@
               "string",
               "null"
             ]
+          }
+        }
+      }
+    },
+    {
+      "name": "set_my_brain_rules",
+      "title": "Set my coaching brain rules",
+      "description": "Use this when a Phorme coach describes how they coach and wants their coaching brain to follow it, for example \"every session starts with mobility, main lifts stay in 3 to 6 reps, never two hard days in a row\". Sent with the coach's words, it reads them into the brain's rules and saves nothing: it returns the rules, one plain line per rule, and what no rule covers yet. Sent with those rules and confirmation, it saves them, and Phorme checks the brain on sample members and says whether every plan still works. Members train by the saved rules from their next session. It needs a connected Phorme account that owns the brain; set confirmation to true only after the coach said yes to the rules as read back.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Set my coaching brain rules",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id from the coach's brains."
+          },
+          "text": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 4000,
+            "description": "How the coach coaches, in their own words from this conversation. Never invented. Sent to read a draft."
+          },
+          "rules": {
+            "type": "object",
+            "description": "The rules a draft returned, unchanged or as the coach corrected them: method, voice, banned_phrases and share. Sent to save."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "True only after the coach confirmed these rules. Needed to save."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "saved",
+          "brain_id",
+          "rules"
+        ],
+        "properties": {
+          "saved": {
+            "type": "boolean",
+            "description": "False for a draft, true once saved."
+          },
+          "brain_id": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "object"
+          },
+          "said": {
+            "type": "array",
+            "description": "One plain line per rule the draft read: key and line."
+          },
+          "unread": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Parts of the coach's words no rule covers yet."
+          },
+          "preview_ok": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "After a save: whether every sample member still gets a plan that works."
+          },
+          "requires_confirmation": {
+            "type": "boolean"
+          },
+          "next": {
+            "type": "string"
+          },
+          "console_url": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_my_brain_code",
+      "title": "Get my coaching brain code",
+      "description": "Use this when a Phorme coach asks for the code or link to share one of their coaching brains, for example \"what is my coach code?\". Each brain has one code, like K7Q2-XR4D, made the first time it is asked for and kept as the brain changes. Anyone who types it in the Phorme app or opens its link starts with that brain. It needs a connected Phorme account that owns the brain.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Get my coaching brain code",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id from the coach's brains."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "code",
+          "url"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "console_url": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "copy_coach_from_code",
+      "title": "Copy a coaching brain from a code",
+      "description": "Use this when a coach has another coach's Phorme code and wants to start their own coaching brain from it, for example \"start my brain from K7Q2-XR4D\". Sent with the code alone, it shows whose brain it is and whether its coach lets other coaches copy it, and changes nothing. Sent with a name and confirmation, it makes a new draft brain from it with its rules and programs, which the coach then makes their own; the coach who made it keeps 10% of what the copy earns. It needs a connected Phorme account; set confirmation to true only after the coach said yes and chose the name.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Copy a coaching brain from a code",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The code as the coach gave it, for example \"K7Q2-XR4D\", or its phor.me/c/ link."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 40,
+            "description": "The name the coach chose for their copy. Needed to copy."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "True only after the coach confirmed the copy and its name."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "copied"
+        ],
+        "properties": {
+          "copied": {
+            "type": "boolean"
+          },
+          "found": {
+            "type": "boolean"
+          },
+          "brain": {
+            "type": "object"
+          },
+          "requires_confirmation": {
+            "type": "boolean"
+          },
+          "next": {
+            "type": "string"
+          },
+          "console_url": {
+            "type": "string"
           }
         }
       }
