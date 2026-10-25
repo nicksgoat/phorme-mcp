@@ -2,10 +2,10 @@
   "server": {
     "name": "phorme-training",
     "title": "Phorme Training",
-    "version": "1.15.0"
+    "version": "1.16.1"
   },
   "protocolVersion": "2025-06-18",
-  "instructions": "Goal: find_coaching_brain; 1:1: find_personal_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import, find_exercise_swap. Places: find_gym_class, book_gym_class, find_clinic. Gym owner: check_place_in_ai, get_gym_report. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm writes; share links, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
+  "instructions": "Goal: find_coaching_brain; 1:1: find_personal_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import, find_exercise_swap. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm writes; share links, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
   "tools": [
     {
       "name": "preview_workout_import",
@@ -1200,7 +1200,7 @@
     {
       "name": "find_gym_class",
       "title": "Find a Phorme gym or class",
-      "description": "Use this when the user wants a gym, studio or class to train at in person, for example \"a strength class in Austin this week\" or \"a gym near me\". It returns up to five Phorme gyms, studios and other places to train in the city named or within 60 km (or radius_km) of the position given, nearest or best matching first, each with its page on phor.me and its classes in the coming days with the class id, local start time, length, places left and a link to book on phor.me. When nothing matches it returns alternatives: the nearest places further out, and a home plan from a Phorme coaching brain. It reads only and shows no prices; booking a class for a signed-in user is a separate step.",
+      "description": "Use this when the user wants a gym, studio or class to train at in person, for example \"a strength class in Austin this week\" or \"a gym near me\". It returns up to five Phorme gyms, studios and other places to train in the city named or, when no city is named, within 60 km (or radius_km) of the approximate location the assistant shares, nearest or best matching first, each with its page on phor.me and its classes in the coming days with the class id, local start time, length, places left and a link to book on phor.me. When nothing matches it returns alternatives: the nearest places further out, and a home plan from a Phorme coaching brain. It reads only and shows no prices; booking a class for a signed-in user is a separate step.",
       "auth": "none",
       "annotations": {
         "title": "Find a Phorme gym or class",
@@ -1217,18 +1217,6 @@
             "maxLength": 80,
             "description": "The city the user named, for example \"Austin\"."
           },
-          "near_lat": {
-            "type": "number",
-            "minimum": -90,
-            "maximum": 90,
-            "description": "Latitude, only if the user shared their position."
-          },
-          "near_lon": {
-            "type": "number",
-            "minimum": -180,
-            "maximum": 180,
-            "description": "Longitude, only if the user shared their position."
-          },
           "class_type": {
             "type": "string",
             "maxLength": 60,
@@ -1244,7 +1232,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 300,
-            "description": "How far from the shared position to look, in km. Default 60. Use a larger one only when the user said they would travel."
+            "description": "How far to look, in km. Default 60. Use a larger one only when the user said they would travel."
           }
         }
       },
@@ -1276,7 +1264,7 @@
     {
       "name": "book_gym_class",
       "title": "Book a Phorme gym class",
-      "description": "Use this when a signed-in user wants a place in one class at a Phorme gym or studio. Confirm the class, the day and time, and the gym with the user first, and set confirmation to true only after they said yes. It books the class for the connected Phorme account: booked when there is a spot, on the waitlist when it is full, a spot held for 15 minutes when the class is paid, or a request the gym is told about when the gym has not opened booking on Phorme yet. A paid class is paid on Phorme's own payment page, through a link in the result. This tool takes no payment, names no amount and never sells a subscription or membership. Booking the same class again returns the same booking. It needs a connected Phorme account with the training:write permission.",
+      "description": "Use this when a signed-in user wants a place in one class at a Phorme gym or studio. Confirm the class, the day and time, and the gym with the user first, and set confirmation to true only after they said yes. It books the class for the connected Phorme account: booked when there is a spot, on the waitlist when it is full, a spot held for 15 minutes when the class is paid, or a request the gym is told about when the gym has not opened booking on Phorme yet. A paid class is finished from the gym's page on phor.me. This tool takes no payment, gives no payment link, names no amount and never sells a subscription or membership. Booking the same class again returns the same booking. It needs a connected Phorme account with the training:write permission.",
       "auth": "OAuth",
       "annotations": {
         "title": "Book a Phorme gym class",
@@ -1328,7 +1316,7 @@
               "requested",
               "book_on_phorme"
             ],
-            "description": "booked: the user is in. waitlisted: the class is full; Phorme moves them up if a spot opens. pending_payment: the spot is held 15 minutes while they pay at pay_url. requested: the gym is told they asked; held up to 7 days, not a booking yet. book_on_phorme: nothing was booked; give them book_url."
+            "description": "booked: the user is in. waitlisted: the class is full; Phorme moves them up if a spot opens. pending_payment: the class is paid and the spot is held 15 minutes; they finish booking it from place.page_url. requested: the gym is told they asked; held up to 7 days, not a booking yet. book_on_phorme: nothing was booked; give them book_url."
           },
           "booking_id": {
             "type": [
@@ -1350,13 +1338,6 @@
               "null"
             ],
             "description": "name, city and page_url of the gym or studio."
-          },
-          "pay_url": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Phorme's own payment page for this booking, only when status is pending_payment."
           },
           "book_url": {
             "type": [
@@ -1433,7 +1414,7 @@
     {
       "name": "find_clinic",
       "title": "Find a Phorme clinic",
-      "description": "Use this when the user wants to be seen in person by a physical therapist, sports medicine clinic, chiropractor, sports massage therapist or recovery studio, in a city they name or near a position they share. It returns up to five Phorme clinic and recovery partners, nearest or best matching first, each with the kind of care, the services it lists, its page on phor.me and a link to ask for an appointment there. It takes a place and a kind of care, never symptoms. It reads only, does not diagnose or treat, shows no prices and books nothing.",
+      "description": "Use this when the user wants to be seen in person by a physical therapist, sports medicine clinic, chiropractor, sports massage therapist or recovery studio, in a city they name or, when they name none, near the approximate location the assistant shares. It returns up to five Phorme clinic and recovery partners, nearest or best matching first, each with the kind of care, the services it lists, its page on phor.me and a link to ask for an appointment there. It takes a place and a kind of care, never symptoms. It reads only, does not diagnose or treat, shows no prices and books nothing.",
       "auth": "none",
       "annotations": {
         "title": "Find a Phorme clinic",
@@ -1449,18 +1430,6 @@
             "type": "string",
             "maxLength": 80,
             "description": "The city the user named, for example \"Austin\"."
-          },
-          "near_lat": {
-            "type": "number",
-            "minimum": -90,
-            "maximum": 90,
-            "description": "Latitude, only if the user shared their position."
-          },
-          "near_lon": {
-            "type": "number",
-            "minimum": -180,
-            "maximum": 180,
-            "description": "Longitude, only if the user shared their position."
           },
           "care": {
             "type": "string",
