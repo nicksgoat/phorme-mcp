@@ -2,7 +2,7 @@
   "server": {
     "name": "phorme-training",
     "title": "Phorme Training",
-    "version": "1.16.1"
+    "version": "1.17.0"
   },
   "protocolVersion": "2025-06-18",
   "instructions": "Goal: find_coaching_brain; 1:1: find_personal_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import, find_exercise_swap. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm writes; share links, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
@@ -2407,6 +2407,508 @@
             "type": "string"
           },
           "console_url": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_my_coach",
+      "title": "Get my AI coach",
+      "description": "Use this when a Phorme coach (or their agent) asks where their AI coach's training stands. It returns the stage (study, first or rate), the one next step to take, and counts of passages, corrections, principles and rating rounds with the last score. Always read next from here; never assume the stage. It reads only. It needs a connected Phorme account that owns the brain.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Get my AI coach",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "brain_id",
+          "stage",
+          "next"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "next": {
+            "type": "string"
+          },
+          "passages": {
+            "type": "integer"
+          },
+          "corrections": {
+            "type": "integer"
+          },
+          "principles": {
+            "type": "integer"
+          },
+          "rounds": {
+            "type": "array"
+          },
+          "score": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "console_url": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "set_my_coach_principles",
+      "title": "Set my coach's principles",
+      "description": "Use this when the coach has approved the principles their agent wrote from their own reels, posts and words: the ideas their AI coach teaches from. Send each principle with a short name, optional cue and why, and source links. It replaces the coach's principles. Set confirmation to true only after the coach approved exactly these; never invent a principle the coach did not teach.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Set my coach's principles",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id",
+          "principles",
+          "confirmation"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          },
+          "principles": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 40,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 2,
+                  "maxLength": 120
+                },
+                "cue": {
+                  "type": "string",
+                  "maxLength": 300
+                },
+                "why": {
+                  "type": "string",
+                  "maxLength": 600
+                },
+                "sources": {
+                  "type": "array",
+                  "maxItems": 10,
+                  "items": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "description": "Links to the coach's own reels or posts this came from."
+                }
+              }
+            }
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "True only after the coach approved exactly these principles."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "saved"
+        ],
+        "properties": {
+          "saved": {
+            "type": "boolean"
+          },
+          "brain_id": {
+            "type": "string"
+          },
+          "principles": {
+            "type": "integer"
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "teach_my_coach",
+      "title": "Teach my coach",
+      "description": "Use this when a Phorme coach wants their AI coach to know something they teach: a cue, a drill, how they see a movement, a transcript of them explaining it. It adds it, in the coach's own words, to what their coach teaches from. Never invent or rewrite the coach's meaning. Set confirmation to true only after the coach said to add it.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Teach my coach",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id",
+          "title",
+          "text",
+          "confirmation"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 160,
+            "description": "A short name for it, for example \"How I cue the hinge\"."
+          },
+          "text": {
+            "type": "string",
+            "minLength": 40,
+            "maxLength": 20000,
+            "description": "What the coach teaches, in their own words."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "True only after the coach said to add this."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "added"
+        ],
+        "properties": {
+          "added": {
+            "type": "boolean"
+          },
+          "brain_id": {
+            "type": "string"
+          },
+          "passages": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "student_questions",
+      "title": "Get my students' questions",
+      "description": "Use this when a Phorme coach wants to see what their members really ask their AI coach, to review or rate it. It returns recent questions with the coach's answer and whether it was corrected, with names, numbers, emails, links and handles removed. It reads only. It needs a connected Phorme account that owns the brain.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Get my students' questions",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "questions"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer"
+          },
+          "questions": {
+            "type": "array"
+          }
+        }
+      }
+    },
+    {
+      "name": "ask_my_coach",
+      "title": "Ask my coach",
+      "description": "Use this when a Phorme coach wants to hear how their AI coach answers one question, to check it sounds like them. It returns the answer and the coach's own passages it drew on, and changes nothing. Each answer runs Phorme's model under a spending cap; once the cap is reached it says so. It needs a connected Phorme account that owns the brain.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Ask my coach",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id",
+          "question"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          },
+          "question": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 300
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "answer"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "spent_usd": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "correct_my_coach",
+      "title": "Correct my coach",
+      "description": "Use this when a Phorme coach reads an answer their AI coach gave and says how they would say it instead. It keeps the coach's version; every later answer that finds this question leads with it. Send the question, the answer unchanged and the coach's own fix. Set confirmation to true only after the coach approved the fix as written.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Correct my coach",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id",
+          "question",
+          "answer",
+          "fix",
+          "confirmation"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          },
+          "question": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 300
+          },
+          "answer": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 6000
+          },
+          "fix": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 4000,
+            "description": "How the coach would say it, in their own words."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "True only after the coach approved this fix."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "kept"
+        ],
+        "properties": {
+          "kept": {
+            "type": "boolean"
+          },
+          "brain_id": {
+            "type": "string"
+          },
+          "corrections": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "rate_my_coach",
+      "title": "Rate my coach",
+      "description": "Use this when a Phorme coach wants to score whether their AI coach sounds like them. Sent with 1 to 20 real student questions, it answers each (Phorme's model, under a spending cap) and returns a round. Sent with that round_id and one mark per answer (true if it sounds like the coach), with confirmation, it saves the score. Show the coach every answer before they mark it; never mark for them.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Rate my coach",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          },
+          "questions": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 300
+            },
+            "description": "Real student questions. Sent to start a round."
+          },
+          "round_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The round to score. Sent with marks."
+          },
+          "marks": {
+            "type": "array",
+            "items": {
+              "type": "boolean"
+            },
+            "description": "One per answer, in order: true if it sounds like the coach."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "True only after the coach marked every answer themselves. Needed to save marks."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "rated"
+        ],
+        "properties": {
+          "rated": {
+            "type": "boolean"
+          },
+          "brain_id": {
+            "type": "string"
+          },
+          "round_id": {
+            "type": "string"
+          },
+          "answers": {
+            "type": "array"
+          },
+          "sounds_like": {
+            "type": "integer"
+          },
+          "of": {
+            "type": "integer"
+          },
+          "spent_usd": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "next": {
             "type": "string"
           }
         }

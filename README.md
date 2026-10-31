@@ -3,7 +3,7 @@
 Coach-built training for any AI assistant. Phorme Training is a remote [Model Context Protocol](https://modelcontextprotocol.io) server. An assistant can use it to find a coaching brain, program, race plan, gym class or sports clinic, preview workouts with exercise demos, and save training to the [Phorme](https://phor.me) app.
 
 - **Endpoint:** `https://phor.me/api/mcp` (streamable HTTP)
-- **Version:** <!-- version:start -->1.16.1<!-- version:end -->
+- **Version:** <!-- version:start -->1.17.0<!-- version:end -->
 - **Auth:** none for finders and previews. Saving training and reading a member's log use OAuth 2.1 ([protected resource metadata](https://phor.me/.well-known/oauth-protected-resource)).
 - **Server card:** [`https://phor.me/.well-known/mcp.json`](https://phor.me/.well-known/mcp.json)
 - **Registry name:** `me.phor/phorme-training` in the [official MCP registry](https://registry.modelcontextprotocol.io/v0/servers?search=me.phor)
@@ -66,6 +66,13 @@ claude mcp add --transport http phorme https://phor.me/api/mcp
 | `set_my_brain_rules` | Use this when a Phorme coach describes how they coach and wants their coaching brain to follow it, for example "every session starts with mobility, main lifts stay in 3 to 6 reps, never two hard days in a row". | write | OAuth |
 | `get_my_brain_code` | Use this when a Phorme coach asks for the code or link to share one of their coaching brains, for example "what is my coach code?". | write | OAuth |
 | `copy_coach_from_code` | Use this when a coach has another coach's Phorme code and wants to start their own coaching brain from it, for example "start my brain from K7Q2-XR4D". | write | OAuth |
+| `get_my_coach` | Use this when a Phorme coach (or their agent) asks where their AI coach's training stands. | read | OAuth |
+| `set_my_coach_principles` | Use this when the coach has approved the principles their agent wrote from their own reels, posts and words: the ideas their AI coach teaches from. | write | OAuth |
+| `teach_my_coach` | Use this when a Phorme coach wants their AI coach to know something they teach: a cue, a drill, how they see a movement, a transcript of them explaining it. | write | OAuth |
+| `student_questions` | Use this when a Phorme coach wants to see what their members really ask their AI coach, to review or rate it. | read | OAuth |
+| `ask_my_coach` | Use this when a Phorme coach wants to hear how their AI coach answers one question, to check it sounds like them. | read | OAuth |
+| `correct_my_coach` | Use this when a Phorme coach reads an answer their AI coach gave and says how they would say it instead. | write | OAuth |
+| `rate_my_coach` | Use this when a Phorme coach wants to score whether their AI coach sounds like them. | write | OAuth |
 | `get_gym_report` | Use this when a gym, studio or clinic owner asks about their own places on Phorme: what is listed, what is live, and how each place did, for example "how is my gym doing on Phorme?" or "did anyone book this week?". | read | OAuth |
 | `create_or_claim_place` | Use this when a gym, studio or clinic owner wants their place on Phorme, for example after an AI check, or says "list my gym". | write | OAuth |
 | `update_place` | Use this when an owner wants to change what their place's page says: name, address, hours, booking link, what kind of place it is, the line about it, its time zone, its phone, its price list or the email for requests. | write | OAuth |
