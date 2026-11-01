@@ -3,7 +3,7 @@
 Coach-built training for any AI assistant. Phorme Training is a remote [Model Context Protocol](https://modelcontextprotocol.io) server. An assistant can use it to find a coaching brain, program, race plan, gym class or sports clinic, preview workouts with exercise demos, and save training to the [Phorme](https://phor.me) app.
 
 - **Endpoint:** `https://phor.me/api/mcp` (streamable HTTP)
-- **Version:** <!-- version:start -->1.17.0<!-- version:end -->
+- **Version:** <!-- version:start -->1.18.0<!-- version:end -->
 - **Auth:** none for finders and previews. Saving training and reading a member's log use OAuth 2.1 ([protected resource metadata](https://phor.me/.well-known/oauth-protected-resource)).
 - **Server card:** [`https://phor.me/.well-known/mcp.json`](https://phor.me/.well-known/mcp.json)
 - **Registry name:** `me.phor/phorme-training` in the [official MCP registry](https://registry.modelcontextprotocol.io/v0/servers?search=me.phor)
@@ -73,6 +73,11 @@ claude mcp add --transport http phorme https://phor.me/api/mcp
 | `ask_my_coach` | Use this when a Phorme coach wants to hear how their AI coach answers one question, to check it sounds like them. | read | OAuth |
 | `correct_my_coach` | Use this when a Phorme coach reads an answer their AI coach gave and says how they would say it instead. | write | OAuth |
 | `rate_my_coach` | Use this when a Phorme coach wants to score whether their AI coach sounds like them. | write | OAuth |
+| `coach_clients` | Use this when a Phorme coach (or their agent) asks about their 1:1 clients: who they are, when each is due a check-in, when the coach last reviewed them, when they last trained, sessions kept over 28 days, and flags such as missed sessions or pain reported. | read | OAuth |
+| `coach_client_brief` | Use this when a Phorme coach wants to review one of their 1:1 clients before a check-in or before writing their training. | read | OAuth |
+| `coach_client_workout` | Use this when a Phorme coach has written a workout for one of their 1:1 clients and wants it on the client's plan. | write | OAuth |
+| `coach_client_post` | Use this when a Phorme coach wants to send one of their 1:1 clients a check-in, a form note (optionally with a video link) or a message. | write | OAuth |
+| `coach_client_reviewed` | Use this after a Phorme coach has reviewed one of their 1:1 clients, to record today as the review and, if the coach set one, the date of the next check-in. | write | OAuth |
 | `get_gym_report` | Use this when a gym, studio or clinic owner asks about their own places on Phorme: what is listed, what is live, and how each place did, for example "how is my gym doing on Phorme?" or "did anyone book this week?". | read | OAuth |
 | `create_or_claim_place` | Use this when a gym, studio or clinic owner wants their place on Phorme, for example after an AI check, or says "list my gym". | write | OAuth |
 | `update_place` | Use this when an owner wants to change what their place's page says: name, address, hours, booking link, what kind of place it is, the line about it, its time zone, its phone, its price list or the email for requests. | write | OAuth |

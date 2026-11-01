@@ -2,7 +2,7 @@
   "server": {
     "name": "phorme-training",
     "title": "Phorme Training",
-    "version": "1.17.0"
+    "version": "1.18.0"
   },
   "protocolVersion": "2025-06-18",
   "instructions": "Goal: find_coaching_brain; 1:1: find_personal_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import, find_exercise_swap. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm writes; share links, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
@@ -2474,6 +2474,13 @@
           },
           "console_url": {
             "type": "string"
+          },
+          "model": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Where the model's voice and method come from (coach_studio, own or none) and a method preview."
           }
         }
       }
@@ -2910,6 +2917,413 @@
           },
           "next": {
             "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "coach_clients",
+      "title": "Get my 1:1 clients",
+      "description": "Use this when a Phorme coach (or their agent) asks about their 1:1 clients: who they are, when each is due a check-in, when the coach last reviewed them, when they last trained, sessions kept over 28 days, and flags such as missed sessions or pain reported. Only the coach's own paying 1:1 clients are listed; a client who paid but has not opened the app yet shows in_app false. It reads only. It needs a connected Phorme account that owns the brain.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Get my 1:1 clients",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "clients"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string"
+          },
+          "clients": {
+            "type": "array",
+            "description": "Each client: client_id, name, in_app, paid_until, started_on, next_check_in, reviewed_on, last_trained, kept_28d (\"done of due\") and flags."
+          }
+        }
+      }
+    },
+    {
+      "name": "coach_client_brief",
+      "title": "Get a 1:1 client's brief",
+      "description": "Use this when a Phorme coach wants to review one of their 1:1 clients before a check-in or before writing their training. It returns the client's goal, week, movements they never do, training maxes, the next 14 days of their plan, sessions done in the last 28 days with their numbers, sleep, HRV, resting heart rate, steps and bodyweight, food targets against what they logged, and pain notes. Never their chats with the AI. The client's data is for coaching that client only; never share it elsewhere. It reads only and needs a client_id from coach_clients.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Get a 1:1 client's brief",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id",
+          "client_id"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          },
+          "client_id": {
+            "type": "string",
+            "maxLength": 36,
+            "description": "The client_id of one of the coach's 1:1 clients, from coach_clients."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "client_id"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "goal": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "schedule": {},
+          "never": {
+            "type": "array"
+          },
+          "maxes": {
+            "type": "array"
+          },
+          "plan_14d": {
+            "type": "array"
+          },
+          "done_28d": {
+            "type": "array"
+          },
+          "body": {
+            "type": "object"
+          },
+          "food": {
+            "type": "object"
+          },
+          "pain": {
+            "type": "array"
+          }
+        }
+      }
+    },
+    {
+      "name": "coach_client_workout",
+      "title": "Put a workout on a 1:1 client's day",
+      "description": "Use this when a Phorme coach has written a workout for one of their 1:1 clients and wants it on the client's plan. It writes it as a real session on that day, marked from the coach, with loads filled from the client's maxes where the coach gave none; the client can undo it in the app. replace true rewrites the workout the coach already put on that day. Send the workout exactly as the coach wrote it. Set confirmation to true only after the coach said yes to this workout for this client.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Put a workout on a 1:1 client's day",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id",
+          "client_id",
+          "title",
+          "exercises",
+          "confirmation"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          },
+          "client_id": {
+            "type": "string",
+            "maxLength": 36,
+            "description": "The client_id of one of the coach's 1:1 clients, from coach_clients."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80,
+            "description": "A short name, for example \"Lower A\"."
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "The day, YYYY-MM-DD. Today when left out."
+          },
+          "exercises": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "sets"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "sets": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10
+                },
+                "reps": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 50
+                },
+                "reps_to": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 60,
+                  "description": "The top of a rep range."
+                },
+                "seconds": {
+                  "type": "integer",
+                  "minimum": 10,
+                  "maximum": 600,
+                  "description": "A hold or timed set, instead of reps."
+                },
+                "meters": {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 10000,
+                  "description": "A carry, sled or run by distance, instead of reps."
+                },
+                "load_lb": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 2000
+                },
+                "rest_s": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 300
+                },
+                "group": {
+                  "type": "string",
+                  "maxLength": 12,
+                  "description": "The same label on two movements makes them a superset."
+                },
+                "note": {
+                  "type": "string",
+                  "maxLength": 140,
+                  "description": "A tempo, drop set or cue, on the last set."
+                }
+              }
+            }
+          },
+          "replace": {
+            "type": "boolean",
+            "description": "True to rewrite the workout the coach already put on that day."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "True only after the coach said yes to this workout for this client."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "written"
+        ],
+        "properties": {
+          "written": {
+            "type": "boolean"
+          },
+          "brain_id": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "result": {},
+          "next": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "coach_client_post",
+      "title": "Send a 1:1 client a check-in or message",
+      "description": "Use this when a Phorme coach wants to send one of their 1:1 clients a check-in, a form note (optionally with a video link) or a message. It posts to the client's coach thread in the app as the coach and sends them a notification. Send the coach's own words; never write as the coach without their yes. Set confirmation to true only after the coach approved exactly this text.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Send a 1:1 client a check-in or message",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id",
+          "client_id",
+          "kind",
+          "text",
+          "confirmation"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          },
+          "client_id": {
+            "type": "string",
+            "maxLength": 36,
+            "description": "The client_id of one of the coach's 1:1 clients, from coach_clients."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "checkin",
+              "form",
+              "message"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "video_url": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "An https link to a form video, for a form note."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "const": true,
+            "description": "True only after the coach approved this text."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "posted"
+        ],
+        "properties": {
+          "posted": {
+            "type": "boolean"
+          },
+          "brain_id": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "coach_client_reviewed",
+      "title": "Mark a 1:1 client reviewed",
+      "description": "Use this after a Phorme coach has reviewed one of their 1:1 clients, to record today as the review and, if the coach set one, the date of the next check-in. It changes only the coach's own check-in dates for that client.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Mark a 1:1 client reviewed",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false,
+        "idempotentHint": true
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brain_id",
+          "client_id"
+        ],
+        "properties": {
+          "brain_id": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "The brain id of the coach's own build, for example \"cameron\"."
+          },
+          "client_id": {
+            "type": "string",
+            "maxLength": 36,
+            "description": "The client_id of one of the coach's 1:1 clients, from coach_clients."
+          },
+          "next_check_in": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "The next check-in, YYYY-MM-DD."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "brain_id": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "reviewed_on": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "next_check_in": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       }
