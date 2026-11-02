@@ -2289,6 +2289,13 @@
             ],
             "description": "After a save: whether every sample member still gets a plan that works."
           },
+          "broke": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "After a save that broke a plan: which sample and why."
+          },
           "requires_confirmation": {
             "type": "boolean"
           },
