@@ -114,7 +114,7 @@ What this CLI remembers between commands.
 cli-anything-phorme --json find build "first HYROX race" --days 4
 cli-anything-phorme --json train workout "Lower" -x "Back squat:4x6@225 lb" -x "Romanian deadlift:3x8"
 cli-anything-phorme --json train swap "Back Squat" --equipment dumbbells --reason equipment
-cli-anything-phorme --json coaches ask stride "how should my long run feel?"
+cli-anything-phorme --json coaches ask miles "how should my long run feel?"
 cli-anything-phorme --json tools call plan_for_race '{"race":"HYROX Miami"}'
 cli-anything-phorme review run --fail-on high
 ```

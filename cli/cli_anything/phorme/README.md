@@ -24,7 +24,7 @@ cli-anything-phorme find races --kind hyrox --where Miami
 cli-anything-phorme train workout "Lower" -x "Back squat:4x6@225 lb" -x "Romanian deadlift:3x8" --minutes 45
 cli-anything-phorme train swap "Back Squat" --equipment dumbbells
 cli-anything-phorme coaches list                      # the coaches as characters
-cli-anything-phorme coaches ask stride "how should my long run feel?"
+cli-anything-phorme coaches ask miles "how should my long run feel?"
 cli-anything-phorme --json tools call find_clinic '{"city":"Austin","care":"physio"}'
 cli-anything-phorme review run --server-json ../server.json --tools-json ../tools.json --fail-on high
 ```
