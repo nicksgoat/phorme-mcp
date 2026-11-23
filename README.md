@@ -104,6 +104,19 @@ claude mcp add --transport http phorme https://phor.me/api/mcp
 
 Full input and output schemas are in [`tools.json`](tools.json).
 
+## Command line
+
+`cli/` is a command line over this server for people and agents, built the [CLI-Anything](https://github.com/HKUDS/CLI-Anything) way: command groups, `--json` on every command, a REPL, and a `SKILL.md` for agents.
+
+```bash
+cd cli && pip install -e .
+cli-anything-phorme find build "first HYROX race" --days 4
+cli-anything-phorme train swap "Back Squat" --equipment dumbbells
+cli-anything-phorme --json tools call plan_for_race '{"race":"HYROX Miami"}'
+```
+
+See [cli/cli_anything/phorme/README.md](cli/cli_anything/phorme/README.md).
+
 ## What it will not do
 
 - It shows no prices and takes no payments.
