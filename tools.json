@@ -2,10 +2,10 @@
   "server": {
     "name": "phorme-training",
     "title": "Phorme Training",
-    "version": "1.18.0"
+    "version": "1.19.0"
   },
   "protocolVersion": "2025-06-18",
-  "instructions": "Goal: find_coaching_brain; 1:1: find_personal_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import, find_exercise_swap. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm writes; share links, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
+  "instructions": "Goal: find_coaching_brain; 1:1: find_personal_coach. Coaches: meet_the_coaches, ask_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import, find_exercise_swap. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm writes; share links, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
   "tools": [
     {
       "name": "preview_workout_import",
@@ -1193,6 +1193,113 @@
               "type": "string"
             },
             "description": "What this does not cover. Tell the user."
+          }
+        }
+      }
+    },
+    {
+      "name": "meet_the_coaches",
+      "title": "Meet the Phorme coaches",
+      "description": "Use this when the user asks who the Phorme coaches are, wants to pick a coach by personality, or names one (for example Miles, Atlas or Nutmeg). Each Phorme coach is a character who plans one kind of training: running, strength, mobility, HYROX, triathlon, athletic training, food, or the adaptive plan. It returns each coach with its animal, what it plans, the scene that shows it, its personality and the Phorme builds it coaches. It reads only and changes nothing.",
+      "auth": "none",
+      "annotations": {
+        "title": "Meet the Phorme coaches",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "coach": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "One coach's name, only when the user named one, for example \"Miles\"."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "coaches",
+          "limits"
+        ],
+        "properties": {
+          "coaches": {
+            "type": "array",
+            "description": "coach (its id), name, animal, plans (the training it plans), the_scene (what it does in one moment), personality, traits, builds (id and name; find_coaching_brain finds the right one) and colour."
+          },
+          "limits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What this does not cover. Tell the user."
+          }
+        }
+      }
+    },
+    {
+      "name": "ask_coach",
+      "title": "Ask a Phorme coach",
+      "description": "Use this when the user wants one Phorme coach's take on a training or food question, for example \"ask Miles how easy my easy runs should be\" or \"what would Nutmeg have me eat before a long run\". It returns that coach's answer in its own voice, from its method, in about 120 words. It knows nothing about the user beyond the question and changes nothing. Do not use it for pain, injury or medical questions.",
+      "auth": "none",
+      "annotations": {
+        "title": "Ask a Phorme coach",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "coach",
+          "question"
+        ],
+        "properties": {
+          "coach": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "The coach to ask, by name or the coach id from meet_the_coaches, for example \"miles\"."
+          },
+          "question": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 300,
+            "description": "The user's question in their words."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "coach",
+          "answer",
+          "limits"
+        ],
+        "properties": {
+          "coach": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "coach, name and animal of the coach who answered."
+          },
+          "answer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The coach's answer. Show it as that coach's words."
+          },
+          "limits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What this answer does not cover. Tell the user."
           }
         }
       }
