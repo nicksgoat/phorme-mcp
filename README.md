@@ -3,7 +3,7 @@
 Coach-built training for any AI assistant. Phorme Training is a remote [Model Context Protocol](https://modelcontextprotocol.io) server. An assistant can use it to find a coaching brain, program, race plan, gym class or sports clinic, preview workouts with exercise demos, and save training to the [Phorme](https://phor.me) app.
 
 - **Endpoint:** `https://phor.me/api/mcp` (streamable HTTP)
-- **Version:** <!-- version:start -->1.19.0<!-- version:end -->
+- **Version:** <!-- version:start -->1.20.0<!-- version:end -->
 - **Auth:** none for finders and previews. Saving training and reading a member's log use OAuth 2.1 ([protected resource metadata](https://phor.me/.well-known/oauth-protected-resource)).
 - **Server card:** [`https://phor.me/.well-known/mcp.json`](https://phor.me/.well-known/mcp.json)
 - **Registry name:** `me.phor/phorme-training` in the [official MCP registry](https://registry.modelcontextprotocol.io/v0/servers?search=me.phor)
@@ -51,6 +51,8 @@ claude mcp add --transport http phorme https://phor.me/api/mcp
 | `find_coaching_brain` | Use this when the user wants a way to train for a goal or sport, for example "I want to get more explosive for basketball", "build muscle three days a week" or "train for a half marathon", or wants to train with a named coach, for example "train with Cameron Goodson", and has not picked a programme, or has a coach code someone gave them, for example K7Q2-XR4D. | read | none |
 | `meet_the_coaches` | Use this when the user asks who the Phorme coaches are, wants to pick a coach by personality, or names one (for example Miles, Atlas or Nutmeg). | read | none |
 | `ask_coach` | Use this when the user wants one Phorme coach's take on a training or food question, for example "ask Miles how easy my easy runs should be" or "what would Nutmeg have me eat before a long run". | read | none |
+| `fuel_my_training_week` | Use this when the user wants a week of eating planned around their training, for example "what should I eat this week, I lift Monday and Thursday and run long on Saturday", "meal plan for marathon training" or "a grocery list for my training week". | read | none |
+| `talk_to_my_coach` | Use this when a Phorme member wants their own coach, the one running their plan in the Phorme app, for example "tell my coach I only have 30 minutes today", "move tomorrow's run to Friday", "log my squats, 4 sets of 5 at 225" or "what's my plan this week". | write | OAuth |
 | `find_gym_class` | Use this when the user wants a gym, studio or class to train at in person, for example "a strength class in Austin this week" or "a gym near me". | read | none |
 | `book_gym_class` | Use this when a signed-in user wants a place in one class at a Phorme gym or studio. | write | OAuth |
 | `cancel_gym_booking` | Use this when a signed-in user wants to give up a class they booked, are on the waitlist for, or asked a gym for on Phorme. | write | OAuth |

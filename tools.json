@@ -2,10 +2,10 @@
   "server": {
     "name": "phorme-training",
     "title": "Phorme Training",
-    "version": "1.19.0"
+    "version": "1.20.0"
   },
   "protocolVersion": "2025-06-18",
-  "instructions": "Goal: find_coaching_brain; 1:1: find_personal_coach. Coaches: meet_the_coaches, ask_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import, find_exercise_swap. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm writes; share links, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
+  "instructions": "Goal: find_coaching_brain; 1:1: find_personal_coach. Coaches: meet_the_coaches, ask_coach. Food: fuel_my_training_week. Your own coach: talk_to_my_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import, find_exercise_swap. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm writes; share links, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
   "tools": [
     {
       "name": "preview_workout_import",
@@ -1300,6 +1300,240 @@
               "type": "string"
             },
             "description": "What this answer does not cover. Tell the user."
+          }
+        }
+      }
+    },
+    {
+      "name": "fuel_my_training_week",
+      "title": "Fuel my training week",
+      "description": "Use this when the user wants a week of eating planned around their training, for example \"what should I eat this week, I lift Monday and Thursday and run long on Saturday\", \"meal plan for marathon training\" or \"a grocery list for my training week\". Nutmeg, the Phorme nutrition coach, sizes each day's energy, protein, carbs and fat to that day's training, times the meals around the sessions, and builds one shopping list by aisle, with the same rules the Phorme app uses. It needs the user's bodyweight and their week of training; ask for those if they did not say. It changes nothing and saves nothing. Do not use it for medical diets, eating disorders, pregnancy or anyone under 18.",
+      "auth": "none",
+      "annotations": {
+        "title": "Fuel my training week",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "weight",
+          "days"
+        ],
+        "properties": {
+          "weight": {
+            "type": "number",
+            "minimum": 35,
+            "maximum": 550,
+            "description": "The user's bodyweight, in unit."
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "lb",
+              "kg"
+            ],
+            "description": "The unit of weight. Default lb."
+          },
+          "goal": {
+            "type": "string",
+            "enum": [
+              "fuel",
+              "lean",
+              "gain",
+              "maintain"
+            ],
+            "description": "fuel (eat for performance, the default), lean (lose fat slowly), gain (build) or maintain."
+          },
+          "diet": {
+            "type": "string",
+            "enum": [
+              "any",
+              "vegetarian",
+              "vegan",
+              "pescatarian"
+            ],
+            "description": "Only when the user said so."
+          },
+          "avoid": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "dairy",
+                "gluten",
+                "nuts",
+                "egg",
+                "fish",
+                "soy"
+              ]
+            },
+            "description": "Foods to leave out, only when the user said so."
+          },
+          "train_at": {
+            "type": "string",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "description": "When they usually train, 24-hour HH:MM, for example \"17:30\". Meals are timed around it."
+          },
+          "start": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "description": "The first day of the week, YYYY-MM-DD. Default today."
+          },
+          "days": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 7,
+            "description": "One entry per day from start, in order; a rest day has no sessions.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sessions": {
+                  "type": "array",
+                  "maxItems": 3,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "minutes"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "lift",
+                          "run",
+                          "ride",
+                          "swim",
+                          "hyrox",
+                          "sport",
+                          "easy"
+                        ],
+                        "description": "lift (weights), run, ride, swim, hyrox (or other conditioning), sport (a game or practice) or easy (a walk, yoga, mobility)."
+                      },
+                      "minutes": {
+                        "type": "integer",
+                        "minimum": 10,
+                        "maximum": 360
+                      },
+                      "hard": {
+                        "type": "boolean",
+                        "description": "True for a hard session: intervals, a heavy lift, a race-pace effort."
+                      },
+                      "km": {
+                        "type": "number",
+                        "description": "A run's distance in km, when known."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "coach",
+          "days",
+          "shopping",
+          "limits"
+        ],
+        "properties": {
+          "coach": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Nutmeg, the coach who planned it."
+          },
+          "days": {
+            "type": "array",
+            "description": "Each day: date, training (rest, easy, moderate, hard, long), calories, protein_g, carbs_g, fat_g and meals (time, meal, name, items, calories, protein_g)."
+          },
+          "shopping": {
+            "type": "array",
+            "description": "The week's shopping by aisle: each item with its amount."
+          },
+          "limits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What this week does not cover. Tell the user."
+          }
+        }
+      }
+    },
+    {
+      "name": "talk_to_my_coach",
+      "title": "Talk to my Phorme coach",
+      "description": "Use this when a Phorme member wants their own coach, the one running their plan in the Phorme app, for example \"tell my coach I only have 30 minutes today\", \"move tomorrow's run to Friday\", \"log my squats, 4 sets of 5 at 225\" or \"what's my plan this week\". It sends their words to that coach, which answers from their real plan and log and can change the plan the way it does in the app chat; on food, Nutmeg answers. It returns the coach's words, every change it made and any question it asked. Send the member's own words. Every change shows in the Phorme app with Undo. It needs a connected Phorme account with the training:write permission. Do not use it for coaches testing their own brain (ask_my_coach) or for medical emergencies.",
+      "auth": "OAuth",
+      "annotations": {
+        "title": "Talk to my Phorme coach",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "What the member says to their coach, in their own words."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "reply",
+          "changes",
+          "limits"
+        ],
+        "properties": {
+          "reply": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The coach's words. Show them as the coach's own."
+          },
+          "coach": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Which Phorme coach spoke, for example nutmeg on food."
+          },
+          "changes": {
+            "type": "array",
+            "description": "Each change the coach made or could not make: change, status (applied or refused) and reason."
+          },
+          "question": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "A question the coach asked, with options. Ask the member and send their answer back with this tool."
+          },
+          "limits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }
@@ -3384,7 +3618,7 @@
     {
       "name": "coach_client_reviewed",
       "title": "Mark a 1:1 client reviewed",
-      "description": "Use this after a Phorme coach has reviewed one of their 1:1 clients, to record today as the review and, if the coach set one, the date of the next check-in. It changes only the coach's own check-in dates for that client.",
+      "description": "Use this after a Phorme coach has reviewed one of their 1:1 clients, to record today as the review and, if the coach set one, the date of the next check-in. It changes only the coach's own check-in dates for that client. Call it only after the coach said the review is done.",
       "auth": "OAuth",
       "annotations": {
         "title": "Mark a 1:1 client reviewed",
