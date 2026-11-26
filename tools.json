@@ -2,7 +2,7 @@
   "server": {
     "name": "phorme-training",
     "title": "Phorme Training",
-    "version": "1.20.0"
+    "version": "1.21.0"
   },
   "protocolVersion": "2025-06-18",
   "instructions": "Goal: find_coaching_brain; 1:1: find_personal_coach. Coaches: meet_the_coaches, ask_coach. Food: fuel_my_training_week. Your own coach: talk_to_my_coach. Program: search_phorme_programs. Sport: preview_sport_week. Race: find_races, plan_for_race. Workout: preview_workout_import, find_exercise_swap. Log: get_training_history, get_lift_progress, get_planned_sessions. Show warnings; confirm writes; share links, then render_training_import. Use only tool output; invent no ids, dates, loads. No prices.",
